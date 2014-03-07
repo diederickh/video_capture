@@ -12,6 +12,7 @@
 #ifndef VIDEO_CAPTURE_BASE_H
 #define VIDEO_CAPTURE_BASE_H
 
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <videocapture/Types.h>

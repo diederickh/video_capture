@@ -1,6 +1,7 @@
 #ifndef VIDEO_CAPTURE_UTILS_H
 #define VIDEO_CAPTURE_UTILS_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string>
 #include <videocapture/Types.h>

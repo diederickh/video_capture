@@ -26,6 +26,7 @@ namespace ca {
       case CA_FPS_10_00: return CA_FPS_10_00;
       case CA_FPS_7_50:  return CA_FPS_7_50;
       case CA_FPS_5_00:  return CA_FPS_5_00;
+      case CA_FPS_2_00:  return CA_FPS_2_00;
       default:           return CA_NONE;
     }
   }
@@ -34,13 +35,17 @@ namespace ca {
     switch(fmt) {
       case CA_UYVY422:          return "CA_UYVY422";
       case CA_YUYV422:          return "CA_YUYV422";
+      case CA_YUV422P:          return "CA_YUV422P";
       case CA_YUV420P:          return "CA_YUV420P";
       case CA_YUV420BP:         return "CA_YUV420BP";
       case CA_YUVJ420P:         return "CA_YUVJ420P";
       case CA_YUVJ420BP:        return "CA_YUVJ420BP";
-      case CA_ARGB:             return "CA_ARGB";
-      case CA_BGRA:             return "CA_BGRA";
+      case CA_ARGB32:           return "CA_ARGB32";
+      case CA_BGRA32:           return "CA_BGRA32";
+      case CA_RGB24:            return "CA_RGB24";
       case CA_JPEG_OPENDML:     return "CA_JPEG_OPENDML";
+      case CA_H264:             return "CA_H264";
+      case CA_MJPEG:            return "CA_MJPEG";
       default:                  return "UNKNOWN_FORMAT";
     }
   }

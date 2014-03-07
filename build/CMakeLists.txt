@@ -37,6 +37,21 @@ if(APPLE)
     ${fr_core_media}
     ${fr_core_media_io}
     )
+endif()
+
+if(UNIX AND NOT APPLE)
+
+  list(APPEND videocapture_sources
+    ${sd}/videocapture/linux/V4L2_Capture.cpp
+    ${sd}/videocapture/linux/V4L2_Types.cpp
+    ${sd}/videocapture/linux/V4L2_Utils.cpp
+    )
+
+  list(APPEND videocapture_libraries
+    udev
+    )
+
+  add_definitions(-D__STDC_CONSTANT_MACROS)
 
 endif()
 

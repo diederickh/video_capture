@@ -38,7 +38,6 @@ namespace ca {
              cb.height, 
              float(cb.fps/100.0f), 
              format_to_string(cb.pixel_format).c_str()
-             
              );
     }
   }

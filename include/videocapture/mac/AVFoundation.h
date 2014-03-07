@@ -1,3 +1,12 @@
+/*
+
+  AVFoundation
+  -------------
+
+  Grabbing on Mac using AVFoundation.
+
+
+ */
 #ifndef VIDEO_CAPTURE_AV_FOUNDATION_H
 #define VIDEO_CAPTURE_AV_FOUNDATION_H
 
@@ -9,14 +18,19 @@
 namespace ca {
 
   class AVFoundation : public Base {
+
   public:
     AVFoundation(frame_callback fc, void* user);
     ~AVFoundation();
+
+    /* Interface */
     int open(Settings settings);
     int close();
     int start();
     int stop();
     void update();
+
+    /* Capabilities */
     std::vector<Capability> getCapabilities(int device);
     std::vector<Device> getDevices();
     std::vector<Format> getOutputFormats();

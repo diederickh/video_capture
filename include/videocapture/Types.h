@@ -14,15 +14,19 @@
 /* Pixel Formats */
 #define CA_UYVY422 1                                                                /* Cb Y0 Cr Y1 */
 #define CA_YUYV422 2                                                                /* Y0 Cb Y1 Cr */
-#define CA_YUV420P 3                                                                /* YUV420 Planar */
-#define CA_YUV420BP 4                                                               /* YUV420 Bi Planar */
-#define CA_YUVJ420P 5                                                               /* YUV420 Planar Full Range (JPEG), J comes from the JPEG. (values 0-255 used) */
-#define CA_YUVJ420BP 6                                                              /* YUV420 Bi-Planer Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
-#define CA_ARGB 7                                                                   /* ARGB 8:8:8:8 32bpp, ARGBARGBARGB... */
-#define CA_BGRA 8                                                                   /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
-#define CA_JPEG_OPENDML 9                                                           /* JPEG with Open-DML extensions */
+#define CA_YUV422P 3                                                                /* YUV422 Planar */
+#define CA_YUV420P 4                                                                /* YUV420 Planar */
+#define CA_YUV420BP 5                                                               /* YUV420 Bi Planar */
+#define CA_YUVJ420P 6                                                               /* YUV420 Planar Full Range (JPEG), J comes from the JPEG. (values 0-255 used) */
+#define CA_YUVJ420BP 7                                                              /* YUV420 Bi-Planer Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
+#define CA_ARGB32 8                                                                 /* ARGB 8:8:8:8 32bpp, ARGBARGBARGB... */
+#define CA_BGRA32 9                                                                 /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
+#define CA_RGB24 10                                                                 /* RGB 8:8:8 24bit */
+#define CA_JPEG_OPENDML 11                                                          /* JPEG with Open-DML extensions */
+#define CA_H264 12                                                                  /* H264 */
+#define CA_MJPEG 13                                                                 /* MJPEG 2*/
 
-/* Framerates */
+/* Frame rates */
 #define CA_FPS_60_00   6000
 #define CA_FPS_30_00   3000
 #define CA_FPS_27_50   2750
@@ -36,6 +40,13 @@
 #define CA_FPS_10_00   1000
 #define CA_FPS_7_50    750
 #define CA_FPS_5_00    500 
+#define CA_FPS_2_00    200
+
+/* States (may be be used by implementations) */
+
+#define CA_STATE_NONE 0x00                                                         /* Default state */
+#define CA_STATE_OPENED 0x01                                                       /* The user opened a device */
+#define CA_STATE_CAPTUREING 0x02                                                   /* The user started captureing */
  
 namespace ca {
 
@@ -55,12 +66,12 @@ namespace ca {
     int height;                                                                     /* Height for this capability. */
     int pixel_format;                                                               /* The pixel format for this capability. */
     int fps;                                                                        /* The FPS, see CA_FPS_* above. */
-    void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
     
     /* Set by the capturer implementation */
     int capability_index;                                                           /* Used by the implementation. Is the ID of this specific capability */
     int fps_index;                                                                  /* Used by the implementation, can be an index to an FPS array that is provided by the implementation */              
     int pixel_format_index;                                                         /* Used by the implementation, represents an index to the pixel format for te implementation */
+    void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
   };
 
   /* -------------------------------------- */

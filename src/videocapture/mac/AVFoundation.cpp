@@ -17,10 +17,14 @@ namespace ca {
   }
 
   AVFoundation::~AVFoundation() {
+
+    close();
+
     if(cap) {
       ca_av_dealloc(cap);
       cap = NULL;
     }
+    
   }
 
   int AVFoundation::open(Settings settings) {
