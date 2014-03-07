@@ -1,0 +1,48 @@
+#include <videocapture/Utils.h>
+
+namespace ca {
+
+  int fps_from_rational(uint64_t num, uint64_t den) {
+
+    char buf[128] = { 0 } ;
+    double r = 1.0 / ( double(num) / double(den) );
+    float fps = 0.0f;
+
+    sprintf(buf, "%2.02f", r);
+    sscanf(buf, "%f", &fps);
+    int v = (fps * 100);
+
+    switch(v) {
+      case CA_FPS_60_00: return CA_FPS_60_00;
+      case CA_FPS_30_00: return CA_FPS_30_00; 
+      case CA_FPS_27_50: return CA_FPS_27_50;
+      case CA_FPS_25_00: return CA_FPS_25_00;
+      case CA_FPS_24_00: return CA_FPS_24_00;
+      case CA_FPS_22_50: return CA_FPS_22_50;
+      case CA_FPS_20_00: return CA_FPS_20_00;
+      case CA_FPS_17_50: return CA_FPS_17_50;
+      case CA_FPS_15_00: return CA_FPS_15_00;
+      case CA_FPS_12_50: return CA_FPS_12_50;
+      case CA_FPS_10_00: return CA_FPS_10_00;
+      case CA_FPS_7_50:  return CA_FPS_7_50;
+      case CA_FPS_5_00:  return CA_FPS_5_00;
+      default:           return CA_NONE;
+    }
+  }
+
+  std::string format_to_string(int fmt) {
+    switch(fmt) {
+      case CA_UYVY422:          return "CA_UYVY422";
+      case CA_YUYV422:          return "CA_YUYV422";
+      case CA_YUV420P:          return "CA_YUV420P";
+      case CA_YUV420BP:         return "CA_YUV420BP";
+      case CA_YUVJ420P:         return "CA_YUVJ420P";
+      case CA_YUVJ420BP:        return "CA_YUVJ420BP";
+      case CA_ARGB:             return "CA_ARGB";
+      case CA_BGRA:             return "CA_BGRA";
+      case CA_JPEG_OPENDML:     return "CA_JPEG_OPENDML";
+      default:                  return "UNKNOWN_FORMAT";
+    }
+  }
+
+} // namespace ca
