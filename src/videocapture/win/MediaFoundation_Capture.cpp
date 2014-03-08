@@ -109,7 +109,7 @@ namespace ca {
     }
 
     state |= CA_STATE_OPENED;
-    printf("Opened.\n");
+
     return 1;
   }
 

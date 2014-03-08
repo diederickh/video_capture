@@ -84,20 +84,47 @@ namespace ca {
     height.clear();
     stride.clear();
     nbytes.clear();
+    offset.clear();
   }
 
   int Frame::set(int w, int h, int fmt) {
-    
+
+    clear();
+
     if(fmt == CA_YUYV422) {
       width.push_back(w / 2);
       height.push_back(h);
       stride.push_back(w / 2);
       nbytes.push_back(w * h * 2);
+      offset.push_back(0);
       return 1;
     }
-    else {
-      return -1;
+    else if(fmt == CA_YUV420P) {
+
+      // Y-channel
+      width.push_back(w);
+      height.push_back(h);
+      stride.push_back(w);
+      nbytes.push_back(w * h);
+      offset.push_back(0);
+
+      // Y-channel
+      width.push_back(w / 2);
+      height.push_back(h / 2);
+      stride.push_back(w / 2);
+      nbytes.push_back( (w / 2) * (h / 2) );
+      offset.push_back(nbytes[0]);
+
+      // V-channel
+      width.push_back(w / 2);
+      height.push_back(h / 2);
+      stride.push_back(w / 2);
+      nbytes.push_back( (w / 2) * (h / 2) );
+      offset.push_back(nbytes[0] + nbytes[1]);
+      return 1;
     }
+    
+    return -1;
   }
 
 

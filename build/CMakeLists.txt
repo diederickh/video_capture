@@ -114,6 +114,23 @@ if(WIN32)
     Mfreadwrite.lib # MFCreateSourceFreaderFromMediaSource
     Shlwapi.lib  # QISearch (Callback)
     )
+
+  if(USE_OPENGL)
+    list(APPEND videocapture_sources
+      ${extern_source_dir}/GLXW/glxw.c
+      )
+
+    list(APPEND videocapture_libraries
+      ${extern_lib_dir}/libpng16_static.lib
+      ${extern_lib_dir}/zlibstatic.lib
+      ${extern_lib_dir}/glfw3.lib
+      Opengl32.lib
+     ws2_32.lib
+     psapi.lib
+     iphlpapi.lib
+
+      )
+  endif()
  
 endif()
 

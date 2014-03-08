@@ -1,3 +1,18 @@
+/*
+  
+  OpenGL example
+  ---------------
+
+  This file contains an example on how to use the capture library 
+  when using CA_YUV422 or CA_YUV420P, which are the default (optimal)
+  pixel formats for most capture devices. This code was tested on 
+  Win 8.1, Mac 10.9 and Arch Linux. 
+
+  The code contains both the CA_YUV422 and CA_YUV420P code-flows 
+  and some things can be done to optimize the unpacking of pixel data. 
+  Though this will work fine in 99% of the cases.
+
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -19,20 +34,26 @@
 using namespace ca;
 
 // Capture 
-void on_signal(int sig);
-void on_frame(void* bytes, int nbytes, void* user);
-Capture capture(on_frame, NULL);
+void on_signal(int sig);                                /* Signal handler, to correctly shutdown the capture process */
+void on_frame(void* bytes, int nbytes, void* user);     /* Gets called whenever new frame data is available */
 
-int cap_width = 640;
-int cap_height = 480;
-GLuint prog = 0;
-GLuint vert = 0;
-GLuint frag = 0;
-GLuint vao = 0;
-GLuint vbo = 0;
-GLuint tex0 = 0;  /* Texture for GL_TEXTURE0 unit */
-unsigned char* pixels = NULL; /* Pointer to the pixels */
-bool must_update_pixels = false; /* Is set to true when we need to upload the pixels */
+Capture capture(on_frame, NULL);                        /* The capture object which does all the work */
+Frame frame;                                            /* Used to get information about the used pixel format, like bytes, planes, etc.. */
+int pix_fmt = CA_NONE;                                  /* The pixel format we want to use; is set below. */
+int cap_width = 640;                                    /* We try to query a capability with this height */
+int cap_height = 480;                                   /* We try to query a capability with this width */
+GLuint prog = 0;                                        /* Shader program */
+GLuint vert = 0;                                        /* The vertex shader */
+GLuint frag = 0;                                        /* The fragment shader */
+GLuint vao = 0;                                         /* Using attribute less renders still needs a vao */
+GLuint tex0 = 0;                                        /* Texture for GL_TEXTURE0 unit, used by YUYV422 and YUV420P (y-layer) */
+GLuint tex1 = 0;                                        /* Texture for GL_TEXTURE1 unit, used by YUV420P (u-layer) */
+GLuint tex2 = 0;                                        /* Texture for GL_TEXTURE2 unit, used by YUV420P (v-layer) */
+unsigned char* pixels = NULL;                           /* Pointer to the pixels (non-planar) */
+unsigned char* pixels_y = NULL;                         /* Pointer to pixels, y-channel, used with YUV420P */
+unsigned char* pixels_u = NULL;                         /* Pointer to pixels, u-channel, used with YUV420P */
+unsigned char* pixels_v = NULL;                         /* Pointer to pixels, v-channel, used with YUV420P */
+bool must_update_pixels = false;                        /* Is set to true when we need to upload the pixels */
 
 // Shaders
 static const char* CAPTURE_VS = ""
@@ -53,20 +74,21 @@ static const char* CAPTURE_VS = ""
   "   vec2(1.0, 1.0) "
   ");"
   ""
-  "out vec2 v_tex; "
+  "out vec2 v_texcoord; "
   ""
   "void main() { "
   "  gl_Position = vec4(pos[gl_VertexID], 0.0, 1.0);"
-  "  v_tex = tex[gl_VertexID];"
+  "  v_texcoord = tex[gl_VertexID];"
   "}"
   "";
 
+// Decode YUV422 data (Y0 Cb Y1 Cr)
 static const char* CAPTURE_YUYV422_FS = ""
   "#version 330\n"
   ""
   "uniform sampler2D u_tex;"
   "layout( location = 0 ) out vec4 fragcolor; "
-  "in vec2 v_tex;"
+  "in vec2 v_texcoord;"
   ""
   "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
   "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
@@ -76,9 +98,9 @@ static const char* CAPTURE_YUYV422_FS = ""
   "void main() {"
   ""
   "  int width = textureSize(u_tex, 0).x * 2;"
-  "  float tex_x = v_tex.x; "
+  "  float tex_x = v_texcoord.x; "
   "  int pixel = int(floor(width * tex_x)) % 2; "
-  "  vec4 tc =  texture( u_tex, v_tex ).rgba;"
+  "  vec4 tc =  texture( u_tex, v_texcoord ).rgba;"
   ""
   "  float cr = tc.r; "
   "  float y2 = tc.g; "
@@ -92,8 +114,34 @@ static const char* CAPTURE_YUYV422_FS = ""
   "  fragcolor.r = dot(yuv, R_cf);"
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
-
   "  fragcolor.a = 1.0;"
+  "}"
+  "";
+
+// Decode YUV410P (3 planes)
+static const char* CAPTURE_YUV420P_FS = ""
+  "#version 330\n"
+  "uniform sampler2D y_tex;"
+  "uniform sampler2D u_tex;"
+  "uniform sampler2D v_tex;"
+  "in vec2 v_texcoord;"
+  "layout( location = 0 ) out vec4 fragcolor;"
+  ""
+  "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
+  "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
+  "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
+  "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+  ""
+  "void main() {"
+  "  float y = texture(y_tex, v_texcoord).r;"
+  "  float u = texture(u_tex, v_texcoord).r;"
+  "  float v = texture(v_tex, v_texcoord).r;"
+  "  vec3 yuv = vec3(y,u,v);"
+  "  yuv += offset;"
+  "  fragcolor = vec4(0.0, 0.0, 0.0, 1.0);"
+  "  fragcolor.r = dot(yuv, R_cf);"
+  "  fragcolor.g = dot(yuv, G_cf);"
+  "  fragcolor.b = dot(yuv, B_cf);"
   "}"
   "";
 
@@ -150,13 +198,16 @@ int main() {
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
-  int pix_fmt = CA_YUYV422; 
   int capability_index = -1;
   int format_index = -1;
 
   capture.listCapabilities(0);
  
 #if defined(__APPLE__) || defined(__linux)
+  pix_fmt = CA_YUYV422; 
+#elif defined(_WIN32)
+  pix_fmt = CA_YUV420P;
+#endif
 
   // Find the capability 
   capability_index = capture.findCapability(0, cap_width, cap_height, pix_fmt);
@@ -165,10 +216,9 @@ int main() {
     printf("Error: cannot find a capability for 640x480.\n");
     ::exit(EXIT_FAILURE);
   }
-
-  //capture.listOutputFormats();
   
-#endif
+  // Check what output formats are supports (not all OSes support these)
+  //capture.listOutputFormats();
 
   // Create the settings param 
   Settings settings;
@@ -183,39 +233,92 @@ int main() {
   }
 
   // Create the pixel buffer, we use Frame to get info about the size of the data for the current pixel format
-  Frame frame;
   if(frame.set(cap_width, cap_height, pix_fmt) < 0) {
     printf("Error: cannot get frame information for the current pixel format.\n");
     capture.close();
     ::exit(EXIT_FAILURE);
   }
-  printf("We need: %d bytes for the texture.\n", frame.nbytes[0]);
-  pixels = new unsigned char[frame.nbytes[0]];
 
   // Create the GL objects we use to render 
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
   vert = rx_create_shader(GL_VERTEX_SHADER, CAPTURE_VS);
-  frag = rx_create_shader(GL_FRAGMENT_SHADER, CAPTURE_YUYV422_FS);
+
+  // Get the correct fragment shader
+  if(pix_fmt == CA_YUYV422) {
+    frag = rx_create_shader(GL_FRAGMENT_SHADER, CAPTURE_YUYV422_FS);
+  }
+  else if(pix_fmt == CA_YUV420P) {
+    frag = rx_create_shader(GL_FRAGMENT_SHADER, CAPTURE_YUV420P_FS);
+  }
+
   prog = rx_create_program(vert, frag);
   glLinkProgram(prog);
   rx_print_shader_link_info(prog);
-
   glUseProgram(prog);
-  glUniform1i(glGetUniformLocation(prog, "u_tex"), 0);
+
+  if(pix_fmt == CA_YUYV422) {
+
+    pixels = new unsigned char[frame.nbytes[0]];
+
+    // CA_YUYV422 texture
+    glUniform1i(glGetUniformLocation(prog, "u_tex"), 0);
   
-  glGenTextures(1, &tex0);
-  glBindTexture(GL_TEXTURE_2D, tex0);
+    glGenTextures(1, &tex0);
+    glBindTexture(GL_TEXTURE_2D, tex0);
+
 #if defined(__APPLE__)
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
 #elif defined(__linux)
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
 #endif
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+  }
+  else if(pix_fmt == CA_YUV420P) {
+
+    pixels_y = new unsigned char[frame.nbytes[0]];
+    pixels_u = new unsigned char[frame.nbytes[1]];
+    pixels_v = new unsigned char[frame.nbytes[2]];
+
+    // CA_YUV420P textures
+    glUniform1i(glGetUniformLocation(prog, "y_tex"), 0);
+    glUniform1i(glGetUniformLocation(prog, "u_tex"), 1);
+    glUniform1i(glGetUniformLocation(prog, "v_tex"), 2);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    // y-channel
+    glGenTextures(1, &tex0); 
+    glBindTexture(GL_TEXTURE_2D, tex0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[0], frame.height[0], 0, GL_RED, GL_UNSIGNED_BYTE, pixels_y);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // u-channel
+    glGenTextures(1, &tex1); 
+    glBindTexture(GL_TEXTURE_2D, tex1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[1], frame.height[1], 0, GL_RED, GL_UNSIGNED_BYTE, pixels_u);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // v-channel
+    glGenTextures(1, &tex2); 
+    glBindTexture(GL_TEXTURE_2D, tex2);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[2], frame.height[2], 0, GL_RED, GL_UNSIGNED_BYTE, pixels_v);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
   
   // Start captureing
   if(capture.start() < 0) {
@@ -230,18 +333,48 @@ int main() {
 
     capture.update();
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex0);
-
     if(must_update_pixels) {
+
+      // Update YUYV422
+      if(pix_fmt == CA_YUYV422) {
+
+        glBindTexture(GL_TEXTURE_2D, tex0);
+
 #if defined(__APPLE__)
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
 #elif defined(__linux)
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
 #endif
+      }
+      // Update YUV420P
+      else if(pix_fmt == CA_YUV420P) {
+        glBindTexture(GL_TEXTURE_2D, tex0);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_RED, GL_UNSIGNED_BYTE, pixels_y);
+
+        glBindTexture(GL_TEXTURE_2D, tex1);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[1], frame.height[1], GL_RED, GL_UNSIGNED_BYTE, pixels_u);
+
+        glBindTexture(GL_TEXTURE_2D, tex2);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[2], frame.height[2], GL_RED, GL_UNSIGNED_BYTE, pixels_v);
+      }
       must_update_pixels = false;
     }
     
+    if(pix_fmt == CA_YUYV422) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, tex0);
+    }
+    else if(pix_fmt == CA_YUV420P) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, tex0);
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, tex1);
+
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, tex2);
+    }
+
     glUseProgram(prog);
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -315,7 +448,16 @@ void error_callback(int err, const char* desc) {
 }
 
 void on_frame(void* bytes, int nbytes, void* user) {
-  memcpy(pixels, (char*)bytes, nbytes);
+  // This function might be called from a different thread so we copy it over and change a flag.
+  // In the event/draw loop we will update the GL textures from the main thread.
+  if(pix_fmt == CA_YUYV422) {
+    memcpy(pixels, (char*)bytes, nbytes);
+  }
+  else if(pix_fmt == CA_YUV420P) {
+    memcpy(pixels_y, ((char*)bytes) + frame.offset[0], frame.nbytes[0]);
+    memcpy(pixels_u, ((char*)bytes) + frame.offset[1], frame.nbytes[1]);
+    memcpy(pixels_v, ((char*)bytes) + frame.offset[2], frame.nbytes[2]);
+  }
   must_update_pixels = true;
 }
 

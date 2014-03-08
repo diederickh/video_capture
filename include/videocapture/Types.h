@@ -140,6 +140,7 @@ namespace ca {
     std::vector<int> height;                                                         /* Width per plane */
     std::vector<int> stride;                                                         /* Stride per plane */
     std::vector<int> nbytes;                                                         /* Number of bytes per plane */
+    std::vector<int> offset;                                                         /* Number of bytes into pixel data when the frame data is continuous */
   };
 
   /* -------------------------------------- */
