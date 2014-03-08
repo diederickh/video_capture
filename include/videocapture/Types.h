@@ -1,6 +1,7 @@
 #ifndef VIDEO_CAPTURE_TYPES_H
 #define VIDEO_CAPTURE_TYPES_H
 
+#include <vector>
 #include <string>
 
 /* General */
@@ -123,6 +124,22 @@ namespace ca {
     int capability;                                                                 /* Number of the capability you want to use. See listCapabilities(). */
     int device;                                                                     /* Number of the device you want to use. See listDevices(). */
     int format;                                                                     /* Number of the output format you want to use. See listOutputFormats(). */
+  };
+
+  /* -------------------------------------- */
+
+  class Frame {                                                                      /* A frame object can be used to store information about the frame data for a specific pixel format. */
+  public:
+    Frame();
+    ~Frame();
+    void clear();
+    int set(int w, int h, int fmt);                                                  /* Set the format. This will set all members. */
+
+  public:
+    std::vector<int> width;                                                          /* Height per plane */
+    std::vector<int> height;                                                         /* Width per plane */
+    std::vector<int> stride;                                                         /* Stride per plane */
+    std::vector<int> nbytes;                                                         /* Number of bytes per plane */
   };
 
   /* -------------------------------------- */

@@ -69,4 +69,36 @@ namespace ca {
     format = CA_NONE;
   }
 
+  /* Frame */
+  /* -------------------------------------- */
+  Frame::Frame() {
+    clear();
+  }
+
+  Frame::~Frame() {
+    clear();
+  }
+
+  void Frame::clear() {
+    width.clear();
+    height.clear();
+    stride.clear();
+    nbytes.clear();
+  }
+
+  int Frame::set(int w, int h, int fmt) {
+    
+    if(fmt == CA_YUYV422) {
+      width.push_back(w / 2);
+      height.push_back(h);
+      stride.push_back(w / 2);
+      nbytes.push_back(w * h * 2);
+      return 1;
+    }
+    else {
+      return -1;
+    }
+  }
+
+
 } // namespace ca

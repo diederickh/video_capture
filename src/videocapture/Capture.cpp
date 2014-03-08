@@ -95,4 +95,9 @@ namespace ca {
     cap->listOutputFormats();
   }
 
+  int Capture::findCapability(int device, int width, int height, int fmt) {
+    assert(cap != NULL);
+    return cap->findCapability(device, width, height, fmt);
+  }
+
 } // namespace ca

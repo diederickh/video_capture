@@ -1,3 +1,13 @@
+/*
+  
+  VideoCapture
+  -------------
+
+  This example shows a minimal example on how to list
+  the capture devices, list capabilities and output formats.
+  
+
+ */
 #include <signal.h>
 
 #if defined(__APPLE__) || defined(__linux)
@@ -20,7 +30,7 @@ void sig_handler(int sig);
 
 int main() {
   printf("\nVideoCapture\n");
-
+  return 0;
   signal(SIGINT, sig_handler);
 
   Settings cfg;

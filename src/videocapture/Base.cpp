@@ -49,5 +49,28 @@ namespace ca {
       printf("[%d] %s\n", ofmts[i].index, format_to_string(ofmts[i].format).c_str());
     }
   }
+  
+  // Find a capability
+  int Base::findCapability(int device, int width, int height, int fmt) {
+
+    int fps = -1;
+    int result = -1;
+    std::vector<Capability> caps = getCapabilities(device);
+
+    for(size_t i = 0; i < caps.size(); ++i) {
+      Capability& cap = caps[i];
+      if(cap.width == width 
+         && cap.height == height 
+         && cap.pixel_format == fmt
+         && cap.fps > fps
+         )
+        {
+          result = i;
+          fps = cap.fps;
+      }
+    }
+
+    return result;
+  }
 
 }; // namespace ca

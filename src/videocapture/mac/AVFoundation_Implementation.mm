@@ -251,8 +251,6 @@
         fromConnection: (AVCaptureConnection*) connection 
 {
  
-  printf("grabber callback.\n");
-
   CVImageBufferRef img_ref = CMSampleBufferGetImageBuffer(sampleBuffer);
   CVPixelBufferLockBaseAddress(img_ref, 0);
   void* base_address = CVPixelBufferGetBaseAddress(img_ref);

@@ -7,4 +7,5 @@ fi
 cd build.release
 cmake -DCMAKE_BUILD_TYPE=Release ../
 cmake --build .
-./videocapture
+#./videocapture
+./opengl_example
