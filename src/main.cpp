@@ -1,5 +1,12 @@
 #include <signal.h>
-#include <unistd.h> /* usleep */
+
+#if defined(__APPLE__) || defined(__linux)
+#  include <unistd.h> /* usleep */
+#elif defined(_WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,6 +14,8 @@
 #include <videocapture/mac/AVFoundation.h>
 #elif defined(__linux)
 #include <videocapture/linux/V4L2_Capture.h>
+#elif defined(_WIN32)
+#include <videocapture/win/MediaFoundation_Capture.h>
 #endif
 
 using namespace ca;
@@ -23,18 +32,22 @@ int main() {
 
   Settings cfg;
   cfg.device = 0;
-  cfg.capability = 212;
+  cfg.capability = 212; // linux
+  cfg.capability = 27;
+
   cfg.format = 0;
 
 #if defined(__APPLE__)
   AVFoundation cap(fcallback, NULL);
 #elif defined(__linux)
   V4L2_Capture cap(fcallback, NULL);
+#elif defined(_WIN32)
+  MediaFoundation_Capture cap(fcallback, NULL);
 #endif
 
   cap.listDevices();
   //cap.listOutputFormats();
-  //cap.listCapabilities(0);
+  cap.listCapabilities(0);
 
   if(cap.open(cfg) < 0) {
     printf("Error: cannot open the device.\n");
@@ -48,7 +61,11 @@ int main() {
 
   while(must_run == true) {
     cap.update();
+#if defined(_WIN32)
+    Sleep(5);
+#else
     usleep(5 * 1000);
+#endif
   }
 
   if(cap.stop() < 0) {

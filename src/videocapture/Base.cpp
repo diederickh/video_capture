@@ -21,7 +21,7 @@ namespace ca {
     }
 
     for(size_t i = 0; i < devices.size(); ++i) {
-      printf("%d) %s\n", devices[i].index, devices[i].name.c_str());
+      printf("[%d] %s\n", devices[i].index, devices[i].name.c_str());
     }
   }
 
@@ -32,7 +32,7 @@ namespace ca {
     for(size_t i = 0; i < caps.size(); ++i) {
       Capability& cb = caps[i];
       
-      printf("%d) %d x %d @ %2.02f, %s\n", 
+      printf("[%02d] %d x %d @ %2.02f, %s\n", 
              cb.capability_index, 
              cb.width, 
              cb.height, 
@@ -46,7 +46,7 @@ namespace ca {
   void Base::listOutputFormats() {
     std::vector<Format> ofmts = getOutputFormats();
     for(size_t i = 0; i < ofmts.size(); ++i) {
-      printf("%d) %s\n", ofmts[i].index, format_to_string(ofmts[i].format).c_str());
+      printf("[%d] %s\n", ofmts[i].index, format_to_string(ofmts[i].format).c_str());
     }
   }
 

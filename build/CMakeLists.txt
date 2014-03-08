@@ -55,6 +55,26 @@ if(UNIX AND NOT APPLE)
 
 endif()
 
+if(WIN32)
+
+  include_directories(${windows_sdk_dir}/Include)
+
+  list(APPEND videocapture_sources
+    ${sd}/videocapture/win/MediaFoundation_Capture.cpp
+    ${sd}/videocapture/win/MediaFoundation_Utils.cpp
+    ${sd}/videocapture/win/MediaFoundation_Callback.cpp
+    )
+
+  list(APPEND videocapture_libraries
+    Mfplat.lib
+    Mf.lib
+    Mfuuid.lib
+    Mfreadwrite.lib # MFCreateSourceFreaderFromMediaSource
+    Shlwapi.lib  # QISearch (Callback)
+    )
+ 
+endif()
+
 include_directories(${videocapture_include_dirs})
 
 add_executable(${CMAKE_PROJECT_NAME} ${sd}/main.cpp ${videocapture_sources})

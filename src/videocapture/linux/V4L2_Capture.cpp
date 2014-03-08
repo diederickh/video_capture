@@ -65,10 +65,10 @@ namespace ca {
       return -4;
     }
 
-    Capability& cap = capabilities[settings.capability];
+    Capability& cap = capabilities.at(settings.capability);
 
     // Get device
-    V4L2_Device v4l2_device = v4l2_devices[settings.device];
+    V4L2_Device v4l2_device = v4l2_devices.at(settings.device);
     capture_device_fd = openDevice(v4l2_device.path);
 
     if(capture_device_fd < 0) {

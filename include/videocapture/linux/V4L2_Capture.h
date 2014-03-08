@@ -55,7 +55,7 @@ namespace ca {
     std::vector<Device> getDevices();                                                  /* We query the udev USB devices. */
     std::vector<Format> getOutputFormats();                                            /* Get the supported output formats. For V4L2 this is empty. */
 
-    // IO Methods
+    /* IO Methods */
     int initializeMMAP(int fd);                                                        /* Initialize MMAP I/O for the given file descriptor */
     int shutdownMMAP();                                                                /* Shutdown MMAP and free all buffers. */
     int readFrame();                                                                   /* Reads one frame from the device */
