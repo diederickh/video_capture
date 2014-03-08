@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #if defined(__linux) || defined(_WIN32)
 #  include <GLXW/glxw.h>
@@ -18,6 +19,7 @@
 using namespace ca;
 
 // Capture 
+void on_signal(int sig);
 void on_frame(void* bytes, int nbytes, void* user);
 Capture capture(on_frame, NULL);
 
@@ -90,6 +92,7 @@ static const char* CAPTURE_YUYV422_FS = ""
   "  fragcolor.r = dot(yuv, R_cf);"
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
+
   "  fragcolor.a = 1.0;"
   "}"
   "";
@@ -103,6 +106,8 @@ void error_callback(int err, const char* desc);
 void resize_callback(GLFWwindow* window, int width, int height);
 
 int main() {
+
+  signal(SIGINT, on_signal);
 
   glfwSetErrorCallback(error_callback);
  
@@ -148,10 +153,10 @@ int main() {
   int pix_fmt = CA_YUYV422; 
   int capability_index = -1;
   int format_index = -1;
-  cap_width = 640;
-  cap_height = 480;
-  
-#if defined(__APPLE__)
+
+  capture.listCapabilities(0);
+ 
+#if defined(__APPLE__) || defined(__linux)
 
   // Find the capability 
   capability_index = capture.findCapability(0, cap_width, cap_height, pix_fmt);
@@ -161,8 +166,8 @@ int main() {
     ::exit(EXIT_FAILURE);
   }
 
-  capture.listOutputFormats();
-
+  //capture.listOutputFormats();
+  
 #endif
 
   // Create the settings param 
@@ -181,6 +186,7 @@ int main() {
   Frame frame;
   if(frame.set(cap_width, cap_height, pix_fmt) < 0) {
     printf("Error: cannot get frame information for the current pixel format.\n");
+    capture.close();
     ::exit(EXIT_FAILURE);
   }
   printf("We need: %d bytes for the texture.\n", frame.nbytes[0]);
@@ -200,7 +206,11 @@ int main() {
   
   glGenTextures(1, &tex0);
   glBindTexture(GL_TEXTURE_2D, tex0);
+#if defined(__APPLE__)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+#elif defined(__linux)
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+#endif
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -210,6 +220,7 @@ int main() {
   // Start captureing
   if(capture.start() < 0) {
     printf("Error: cannot start capture.\n");
+    capture.close();
     ::exit(EXIT_FAILURE);
   }
 
@@ -217,11 +228,17 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    capture.update();
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex0);
-    
+
     if(must_update_pixels) {
+#if defined(__APPLE__)
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+#elif defined(__linux)
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+#endif
       must_update_pixels = false;
     }
     
@@ -235,6 +252,7 @@ int main() {
 
   if(capture.stop() < 0) {
     printf("Error: cannot stop capture.\n");
+    capture.close();
     ::exit(EXIT_FAILURE);
   }
 
@@ -299,4 +317,10 @@ void error_callback(int err, const char* desc) {
 void on_frame(void* bytes, int nbytes, void* user) {
   memcpy(pixels, (char*)bytes, nbytes);
   must_update_pixels = true;
+}
+
+void on_signal(int sig) {
+  capture.stop();
+  capture.close();
+  ::exit(EXIT_FAILURE);
 }

@@ -75,6 +75,26 @@ if(UNIX AND NOT APPLE)
 
   add_definitions(-D__STDC_CONSTANT_MACROS)
 
+  if(USE_OPENGL)
+    list(APPEND videocapture_libraries
+      ${extern_lib_dir}/libglfw3.a
+      ${extern_lib_dir}/libpng.a
+      ${extern_lib_dir}/libz.a
+      GL
+      X11
+      Xxf86vm
+      Xrandr
+      pthread
+      dl
+      Xi
+      )
+
+    list(APPEND videocapture_sources
+      ${extern_source_dir}/GLXW/glxw.c
+      )
+    
+  endif()
+
 endif()
 
 if(WIN32)
