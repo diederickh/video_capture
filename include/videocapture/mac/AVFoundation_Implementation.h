@@ -1,6 +1,6 @@
 /*
 
-  AVImplementation
+  AVFoundation_Implementation
   ----------------
 
   This class implements a video capturer for Mac using AVFoundation. The 
@@ -26,7 +26,7 @@
 // resource: https://webrtc.googlecode.com/svn/trunk/webrtc/modules/video_capture/ios/video_capture_ios_objc.mm
 // resource: https://developer.apple.com/library/ios/documentation/AudioVideo/Conceptual/AVFoundationPG/AVFoundationPG.pdf
 
-@interface AVImplementation : NSObject<AVCaptureVideoDataOutputSampleBufferDelegate>
+@interface AVFoundation_Implementation : NSObject<AVCaptureVideoDataOutputSampleBufferDelegate>
 {
   AVCaptureSession* session;                                                                  /* Manages the state of the input device. */
   AVCaptureDeviceInput* input;                                                                /* Concrete instance of `AVDeviceInput`,  represents the input device (webcam). */

@@ -1,9 +1,9 @@
-#include <videocapture/mac/AVFoundation.h>
+#include <videocapture/mac/AVFoundation_Capture.h>
 #include <stdlib.h>
 
 namespace ca {
   
-  AVFoundation::AVFoundation(frame_callback fc, void* user)
+  AVFoundation_Capture::AVFoundation_Capture(frame_callback fc, void* user)
     :Base(fc, user)
     ,cap(NULL)
   {
@@ -16,7 +16,7 @@ namespace ca {
     ca_av_set_callback(cap, fc, user);
   }
 
-  AVFoundation::~AVFoundation() {
+  AVFoundation_Capture::~AVFoundation_Capture() {
 
     close();
 
@@ -24,44 +24,42 @@ namespace ca {
       ca_av_dealloc(cap);
       cap = NULL;
     }
-    
   }
 
-  int AVFoundation::open(Settings settings) {
+  int AVFoundation_Capture::open(Settings settings) {
     return ca_av_open(cap, settings);
-  }
+}
 
-  int AVFoundation::close() {
+  int AVFoundation_Capture::close() {
     return ca_av_close(cap);
   }
 
-  int AVFoundation::start() {
+  int AVFoundation_Capture::start() {
     return ca_av_start(cap);
   }
 
-  int AVFoundation::stop() {
+  int AVFoundation_Capture::stop() {
     return ca_av_stop(cap);
   }
 
-  void AVFoundation::update() {
+  void AVFoundation_Capture::update() {
   }
 
-  std::vector<Capability> AVFoundation::getCapabilities(int device) {
+  std::vector<Capability> AVFoundation_Capture::getCapabilities(int device) {
     std::vector<Capability> caps;
     ca_av_get_capabilities(cap, device, caps);
     return caps;
   }
 
-  std::vector<Device> AVFoundation::getDevices() {
+  std::vector<Device> AVFoundation_Capture::getDevices() {
     std::vector<Device> result;
     ca_av_get_devices(cap, result);
     return result;
   }
 
-  std::vector<Format> AVFoundation::getOutputFormats() {
+  std::vector<Format> AVFoundation_Capture::getOutputFormats() {
     std::vector<Format> result;
     ca_av_get_output_formats(cap, result);
     return result;
   }
-
 }; // namespace ca

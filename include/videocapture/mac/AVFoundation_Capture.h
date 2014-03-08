@@ -1,6 +1,6 @@
 /*
 
-  AVFoundation
+  AVFoundation_Capture
   -------------
 
   Grabbing on Mac using AVFoundation.
@@ -13,15 +13,15 @@
 #include <videocapture/Base.h>
 #include <videocapture/Types.h>
 #include <videocapture/Utils.h>
-#include <videocapture/mac/AVInterface.h>
+#include <videocapture/mac/AVFoundation_Interface.h>
 
 namespace ca {
 
-  class AVFoundation : public Base {
+  class AVFoundation_Capture : public Base {
 
   public:
-    AVFoundation(frame_callback fc, void* user);
-    ~AVFoundation();
+    AVFoundation_Capture(frame_callback fc, void* user);
+    ~AVFoundation_Capture();
 
     /* Interface */
     int open(Settings settings);
@@ -36,7 +36,7 @@ namespace ca {
     std::vector<Format> getOutputFormats();
 
   private:
-    void* cap;                                               /* The AVImplementation interface */
+    void* cap;                                               /* The AVFoundation_Implementation interface */
   };
 
 }; // namespace ca

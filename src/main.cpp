@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 #if defined(__APPLE__)
-#include <videocapture/mac/AVFoundation.h>
+#include <videocapture/mac/AVFoundation_Capture.h>
 #elif defined(__linux)
 #include <videocapture/linux/V4L2_Capture.h>
 #elif defined(_WIN32)
@@ -38,7 +38,7 @@ int main() {
   cfg.format = 0;
 
 #if defined(__APPLE__)
-  AVFoundation cap(fcallback, NULL);
+  AVFoundation_Capture cap(fcallback, NULL);
 #elif defined(__linux)
   V4L2_Capture cap(fcallback, NULL);
 #elif defined(_WIN32)

@@ -18,8 +18,8 @@ set(videocapture_include_dirs ${id})
 if(APPLE)
 
   list(APPEND videocapture_sources
-    ${sd}/videocapture/mac/AVFoundation.cpp
-    ${sd}/videocapture/mac/AVImplementation.mm
+    ${sd}/videocapture/mac/AVFoundation_Capture.cpp
+    ${sd}/videocapture/mac/AVFoundation_Implementation.mm
     )
 
   find_library(fr_core_foundation CoreFoundation)

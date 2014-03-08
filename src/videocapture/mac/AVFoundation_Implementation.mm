@@ -1,6 +1,6 @@
-#import <videocapture/mac/AVImplementation.h>
+#import <videocapture/mac/AVFoundation_Implementation.h>
 
-@implementation AVImplementation 
+@implementation AVFoundation_Implementation 
 
 // Initializes the capturer
 - (id) init {
@@ -430,8 +430,8 @@
     case kCVPixelFormatType_422YpCbCr8_yuvs:               return CA_YUYV422;  
     case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:  return CA_YUV420BP;  
     case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:   return CA_YUVJ420BP;  
-    case kCVPixelFormatType_32ARGB:                        return CA_ARGB;  
-    case kCVPixelFormatType_32BGRA:                        return CA_BGRA;  
+    case kCVPixelFormatType_32ARGB:                        return CA_ARGB32;  
+    case kCVPixelFormatType_32BGRA:                        return CA_BGRA32;  
     default:                                               return CA_NONE;
   }
 }
@@ -442,8 +442,8 @@
     case CA_YUYV422:    return kCVPixelFormatType_422YpCbCr8_yuvs;  
     case CA_YUV420BP:   return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;  
     case CA_YUVJ420BP:  return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;  
-    case CA_ARGB:       return kCVPixelFormatType_32ARGB;  
-    case CA_BGRA:       return kCVPixelFormatType_32BGRA;  
+    case CA_ARGB32:     return kCVPixelFormatType_32ARGB;  
+    case CA_BGRA32:     return kCVPixelFormatType_32BGRA;  
     default:            return CA_NONE;
   }
 }
@@ -525,7 +525,7 @@
 /* -------------------------------------- */
 
 void* ca_av_alloc() {
-  return (void*)[[AVImplementation alloc] init];
+  return (void*)[[AVFoundation_Implementation alloc] init];
 }
 
 void ca_av_dealloc(void* cap) {
