@@ -9,14 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#if defined(__APPLE__)
-#include <videocapture/mac/AVFoundation_Capture.h>
-#elif defined(__linux)
-#include <videocapture/linux/V4L2_Capture.h>
-#elif defined(_WIN32)
-#include <videocapture/win/MediaFoundation_Capture.h>
-#endif
+#include <videocapture/Capture.h>
 
 using namespace ca;
 
@@ -36,14 +29,8 @@ int main() {
   cfg.capability = 27;
 
   cfg.format = 0;
-
-#if defined(__APPLE__)
-  AVFoundation_Capture cap(fcallback, NULL);
-#elif defined(__linux)
-  V4L2_Capture cap(fcallback, NULL);
-#elif defined(_WIN32)
-  MediaFoundation_Capture cap(fcallback, NULL);
-#endif
+  
+  Capture cap(fcallback, NULL);
 
   cap.listDevices();
   //cap.listOutputFormats();

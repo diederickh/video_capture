@@ -158,6 +158,6 @@ namespace ca {
     MEDIAFOUNDATION_CHECK_VIDEOFORMAT(guid, MFAudioFormat_MPEG);             //     WAVE_FORMAT_MPEG 
     MEDIAFOUNDATION_CHECK_VIDEOFORMAT(guid, MFAudioFormat_AAC);              //     WAVE_FORMAT_MPEG_HEAAC 
     MEDIAFOUNDATION_CHECK_VIDEOFORMAT(guid, MFAudioFormat_ADTS);             //     WAVE_FORMAT_MPEG_ADTS_AAC 
-    return "UNKOWN";
+    return "UNKNOWN";
   }
 } // namespace ca

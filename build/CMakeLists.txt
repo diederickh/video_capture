@@ -9,6 +9,7 @@ set(id ${bd}/include/)
 set(videocapture_sources 
   ${sd}/main.cpp
   ${sd}/videocapture/Base.cpp
+  ${sd}/videocapture/Capture.cpp
   ${sd}/videocapture/Types.cpp
   ${sd}/videocapture/Utils.cpp
 )

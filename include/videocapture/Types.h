@@ -6,10 +6,21 @@
 /* General */
 #define CA_NONE -1
 
-/* Capture Implementations */
+/* Capture Drivers */
 #define CA_MEDIA_FOUNDATION 1                                                       /* Windows: Capture using Windows Media Foundation. */
 #define CA_AV_FOUNDATION 2                                                          /* Mac:     Capture using AVFoundation. */
 #define CA_V4L2 3                                                                   /* Linux:   Capture using Video4Linux 2. */
+
+/* Default driver per OS */
+#if defined(__APPLE__)
+#  define CA_DEFAULT_DRIVER CA_AV_FOUNDATION
+#elif defined(__linux)
+#  define CA_DEFAULT_DRIVER CA_V4L2
+#elif defined(_WIN32)
+#  define CA_DEFAULT_DRIVER CA_MEDIA_FOUNDATION
+#else 
+#  error "We have no default capture implementation for this OS."
+#endif
 
 /* Pixel Formats */
 #define CA_UYVY422 1                                                                /* Cb Y0 Cr Y1 */
