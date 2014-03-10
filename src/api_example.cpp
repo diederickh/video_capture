@@ -5,7 +5,6 @@
 
   This example shows a minimal example on how to list
   the capture devices, list capabilities and output formats.
-  
 
  */
 #include <signal.h>
@@ -30,20 +29,18 @@ void sig_handler(int sig);
 
 int main() {
   printf("\nVideoCapture\n");
-  return 0;
+
   signal(SIGINT, sig_handler);
 
   Settings cfg;
   cfg.device = 0;
-  cfg.capability = 212; // linux
-  cfg.capability = 27;
-
+  cfg.capability = 0;
   cfg.format = 0;
   
   Capture cap(fcallback, NULL);
 
   cap.listDevices();
-  //cap.listOutputFormats();
+  cap.listOutputFormats();
   cap.listCapabilities(0);
 
   if(cap.open(cfg) < 0) {

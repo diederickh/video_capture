@@ -35,9 +35,9 @@ if not exist "%d%\%bd%" (
 
 cd %d%\%bd%
 cmake -DCMAKE_BUILD_TYPE=%cmake_bt% -G %cmake_gen% %cmake_opt% ..\
-:: cmake --build . --target install --config %cmake_bt%
-cmake --build .  
-cd Debug
+cmake --build . --target install --config %cmake_bt%
+:: cmake --build .  
+:: cd Debug
 :: videocapture.exe
 cd %d%
 
