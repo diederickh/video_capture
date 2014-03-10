@@ -137,16 +137,20 @@ if(WIN32)
 endif()
 
 include_directories(${videocapture_include_dirs})
-
 add_library(videocapture ${videocapture_sources})
-#add_executable(${CMAKE_PROJECT_NAME} ${sd}/main.cpp ${videocapture_sources})
-#target_link_libraries(${CMAKE_PROJECT_NAME} ${videocapture_libraries})
+
+add_executable(api_example ${sd}/api_example.cpp)
+target_link_libraries(api_example ${videocapture_libraries} videocapture)
+add_dependencies(api_example video_capture)
+install(TARGETS api_example RUNTIME DESTINATION bin)
 
 if(USE_OPENGL)
   add_executable(opengl_example ${sd}/opengl_example.cpp) 
   target_link_libraries(opengl_example ${videocapture_libraries} videocapture)
   add_dependencies(opengl_example videocapture)
+  install(TARGETS opengl_example RUNTIME DESTINATION bin)
 endif()
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
+
