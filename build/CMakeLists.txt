@@ -10,6 +10,15 @@ set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
 set(id ${bd}/include/)
 
+if(NOT EXISTS ${bd}/extern)
+  message(STATUS "Downloading opengl dependencies")
+  file(DOWNLOAD https://github.com/roxlu/binaries/blob/master/video_capture/extern_video_capture_0.0.0.1.zip?raw=true ${bd}/extern/extern.zip SHOW_PROGRESS TIMEOUT 5)
+  execute_process(COMMAND
+     ${CMAKE_COMMAND} -E tar xzf ${bd}/extern/extern.zip
+     WORKING_DIRECTORY ${bd}/
+     )
+endif()
+
 set(CMAKE_INSTALL_PREFIX ${bd}/install/${tri_triplet}/)
 
 set(videocapture_sources 
