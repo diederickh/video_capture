@@ -52,7 +52,7 @@ steps.
 ::
    
    cd build
-   build.bat
+   build.bat 64 release
 
 
 .. _CMake: http://www.cmake.org

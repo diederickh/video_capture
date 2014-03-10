@@ -1,11 +1,12 @@
 video_capture
 =============
 
-Cross platform Video Capture library
+Cross Platform Video Capture library for Mac, Windows and Linux.
 
+See [Read The Docs](http://video-capture.readthedocs.org/) for the documentation. 
 
 TODO:
 =====
 
- - Win: set framerate
+ - On Windows we need to set the desired framerate
  - We probably want to pass a device index to getOutputFormats()
