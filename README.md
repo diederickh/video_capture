@@ -1,5 +1,5 @@
-video_capture
-=============
+Cross Platform Video Capture
+=============================
 
 Cross Platform Video Capture library for Mac, Windows and Linux.
 
