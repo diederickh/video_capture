@@ -6,6 +6,6 @@ fi
 
 cd build.release
 cmake -DCMAKE_BUILD_TYPE=Release ../
-cmake --build .
+cmake --build . --target install
 #./videocapture
 ./opengl_example

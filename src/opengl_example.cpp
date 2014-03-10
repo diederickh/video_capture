@@ -24,7 +24,6 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
-#define ROXLU_USE_PNG
 #define ROXLU_USE_MATH
 #define ROXLU_USE_OPENGL
 #define ROXLU_IMPLEMENTATION

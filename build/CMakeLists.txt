@@ -10,6 +10,8 @@ set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
 set(id ${bd}/include/)
 
+set(CMAKE_INSTALL_PREFIX ${bd}/install/${tri_triplet}/)
+
 set(videocapture_sources 
   ${sd}/videocapture/Base.cpp
   ${sd}/videocapture/Capture.cpp
@@ -35,7 +37,6 @@ if(APPLE)
   find_library(fr_cocoa Cocoa)
   find_library(fr_core_video CoreVideo)
   find_library(fr_core_media CoreMedia)
-  find_library(fr_core_media_io CoreMediaIO)
   
   list(APPEND videocapture_libraries
     ${fr_core_foundation}
@@ -43,7 +44,6 @@ if(APPLE)
     ${fr_cocoa}
     ${fr_core_video}
     ${fr_core_media}
-    ${fr_core_media_io}
     )
 
   if(USE_OPENGL)
@@ -53,8 +53,6 @@ if(APPLE)
 
     list(APPEND videocapture_libraries
       ${extern_lib_dir}/libglfw3.a
-      ${extern_lib_dir}/libpng.a
-      ${extern_lib_dir}/libz.a
       ${fr_opengl}
       ${fr_iokit}
       )
@@ -78,8 +76,6 @@ if(UNIX AND NOT APPLE)
   if(USE_OPENGL)
     list(APPEND videocapture_libraries
       ${extern_lib_dir}/libglfw3.a
-      ${extern_lib_dir}/libpng.a
-      ${extern_lib_dir}/libz.a
       GL
       X11
       Xxf86vm
@@ -121,14 +117,11 @@ if(WIN32)
       )
 
     list(APPEND videocapture_libraries
-      ${extern_lib_dir}/libpng16_static.lib
-      ${extern_lib_dir}/zlibstatic.lib
       ${extern_lib_dir}/glfw3.lib
       Opengl32.lib
-     ws2_32.lib
-     psapi.lib
-     iphlpapi.lib
-
+      ws2_32.lib
+      psapi.lib
+      iphlpapi.lib
       )
   endif()
  
@@ -136,10 +129,15 @@ endif()
 
 include_directories(${videocapture_include_dirs})
 
+add_library(videocapture ${videocapture_sources})
 #add_executable(${CMAKE_PROJECT_NAME} ${sd}/main.cpp ${videocapture_sources})
 #target_link_libraries(${CMAKE_PROJECT_NAME} ${videocapture_libraries})
 
 if(USE_OPENGL)
-  add_executable(opengl_example ${sd}/opengl_example.cpp ${videocapture_sources})
-  target_link_libraries(opengl_example ${videocapture_libraries})
+  add_executable(opengl_example ${sd}/opengl_example.cpp) 
+  target_link_libraries(opengl_example ${videocapture_libraries} videocapture)
+  add_dependencies(opengl_example videocapture)
 endif()
+
+install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
+install(TARGETS videocapture ARCHIVE DESTINATION lib)
