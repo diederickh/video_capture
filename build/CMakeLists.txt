@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(videocapture)
 
 include(${CMAKE_CURRENT_LIST_DIR}/Triplet.cmake)
+include(ExternalProject)
 
 option(USE_OPENGL "Create OpenGL examples" ON)
 
@@ -10,13 +11,20 @@ set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
 set(id ${bd}/include/)
 
+# Download opengl dependency
 if(NOT EXISTS ${bd}/extern)
   message(STATUS "Downloading opengl dependencies")
-  file(DOWNLOAD https://github.com/roxlu/binaries/blob/master/video_capture/extern_video_capture_0.0.0.1.zip?raw=true ${bd}/extern/extern.zip SHOW_PROGRESS TIMEOUT 5)
+  set(extern_url "http://www.github.com/roxlu/binaries/blob/master/video_capture/extern_video_capture_0.0.0.1.tar.gz?raw=true")
+  file(DOWNLOAD "${extern_url}" ${bd}/extern/extern.tar.gz SHOW_PROGRESS TIMEOUT 30 STATUS status)
   execute_process(COMMAND
-     ${CMAKE_COMMAND} -E tar xzf ${bd}/extern/extern.zip
+     ${CMAKE_COMMAND} -E tar xzf ${bd}/extern/extern.tar.gz
      WORKING_DIRECTORY ${bd}/
      )
+endif()
+
+# Download tinylib dependency
+if(NOT EXISTS ${bd}/shared/tinylib/src/tinylib.h)
+  file(DOWNLOAD https://raw.github.com/roxlu/tinylib/master/src/tinylib.h ${bd}/shared/tinylib/src/tinylib.h SHOW_PROGRESS TIMEOUT 30)
 endif()
 
 set(CMAKE_INSTALL_PREFIX ${bd}/install/${tri_triplet}/)
