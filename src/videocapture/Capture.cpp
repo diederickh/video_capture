@@ -80,19 +80,19 @@ namespace ca {
     return cap->getOutputFormats();
   } 
 
-  void Capture::listDevices() {
+  int Capture::listDevices() {
     assert(cap != NULL);
-    cap->listDevices();
+    return cap->listDevices();
   }
                         
-  void Capture::listCapabilities(int device) {
+  int Capture::listCapabilities(int device) {
     assert(cap != NULL);
-    cap->listCapabilities(device);
+    return cap->listCapabilities(device);
   }
  
-  void Capture::listOutputFormats() {
+  int Capture::listOutputFormats() {
     assert(cap != NULL);
-    cap->listOutputFormats();
+    return cap->listOutputFormats();
   }
 
   int Capture::findCapability(int device, int width, int height, int fmt) {

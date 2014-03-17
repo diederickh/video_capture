@@ -268,15 +268,15 @@
 
 #if 0
   // Some debug info.
-  /*
   CMFormatDescriptionRef format_desc_ref = CMSampleBufferGetFormatDescription(sampleBuffer);
   FourCharCode active_video_type = CMFormatDescriptionGetMediaSubType(format_desc_ref);
   int av_fmt = CMFormatDescriptionGetMediaSubType(format_desc_ref);
-  int libav_fmt = [self avFoundationPixelFormatToLibavPixelFormat: av_fmt];
-  std::string libav_fmt_str = rx_libav_pixel_format_to_string((AVPixelFormat)libav_fmt);
-  NSString* av_fmt_str = [self getPixelFormatString:av_fmt];
-  printf("Capturing in: %s, AVFoundation name: %s", libav_fmt_str.c_str(), [av_fmt_str UTF8String]);
-  */
+  if(av_fmt == kCVPixelFormatType_422YpCbCr8) {
+    printf("> kCVPixelFormatType_422YpCbCr8.\n");
+  }
+  else if(av_fmt == kCVPixelFormatType_422YpCbCr8_yuvs) {
+    printf("> kCVPixelFormatType_422YpCbCr8_yuvs.\n");
+  }
 #endif
 
 }
@@ -424,8 +424,8 @@
 
   int ifmt = [fmt integerValue];
   switch(ifmt) {
-    case kCVPixelFormatType_422YpCbCr8:                    return CA_UYVY422;
-    case kCVPixelFormatType_422YpCbCr8_yuvs:               return CA_YUYV422;  
+    case kCVPixelFormatType_422YpCbCr8:                    return CA_UYVY422; // Cb Y0 Cr Y1
+    case kCVPixelFormatType_422YpCbCr8_yuvs:               return CA_YUYV422; // Y0 Cb Y1 Cr  
     case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:  return CA_YUV420BP;  
     case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:   return CA_YUVJ420BP;  
     case kCVPixelFormatType_32ARGB:                        return CA_ARGB32;  

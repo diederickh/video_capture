@@ -1,5 +1,5 @@
 /*
-
+ 
   Cross Platform Interface
   ------------------------
 
@@ -49,9 +49,9 @@ namespace ca {
     std::vector<Format> getOutputFormats();
 
     /* Info */
-    void listDevices();                         
-    void listCapabilities(int device);          
-    void listOutputFormats();                   
+    int listDevices();                         
+    int listCapabilities(int device);          
+    int listOutputFormats();                   
     int findCapability(int device, int width, int height, int fmt);
 
   public:

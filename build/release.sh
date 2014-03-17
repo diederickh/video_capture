@@ -8,4 +8,5 @@ cd build.release
 cmake -DCMAKE_BUILD_TYPE=Release ../
 cmake --build . --target install
 #./videocapture
-./opengl_example
+#./opengl_example
+./easy_opengl_example

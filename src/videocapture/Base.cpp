@@ -12,23 +12,29 @@ namespace ca {
   }
 
   // List all devices
-  void Base::listDevices() {
+  int Base::listDevices() {
 
     std::vector<Device> devices = getDevices();
     if(devices.size() == 0) {
       printf("No devices found");
-      return;
+      return -1;
     }
 
     for(size_t i = 0; i < devices.size(); ++i) {
       printf("[%d] %s\n", devices[i].index, devices[i].name.c_str());
     }
+
+    return (int)devices.size();
   }
 
   // List the capabilities for the given device.
-  void Base::listCapabilities(int device) {
+  int Base::listCapabilities(int device) {
 
     std::vector<Capability> caps = getCapabilities(device);
+    if(caps.size() == 0) {
+      return -1;
+    }
+
     for(size_t i = 0; i < caps.size(); ++i) {
       Capability& cb = caps[i];
       
@@ -40,14 +46,22 @@ namespace ca {
              format_to_string(cb.pixel_format).c_str()
              );
     }
+    return (int)caps.size();
   }
 
   // List output formats.
-  void Base::listOutputFormats() {
+  int Base::listOutputFormats() {
+
     std::vector<Format> ofmts = getOutputFormats();
+    if(ofmts.size() == 0) {
+      return -1;
+    }
+    
     for(size_t i = 0; i < ofmts.size(); ++i) {
       printf("[%d] %s\n", ofmts[i].index, format_to_string(ofmts[i].format).c_str());
     }
+
+    return (int)ofmts.size();
   }
   
   // Find a capability

@@ -57,7 +57,6 @@ bool must_update_pixels = false;                        /* Is set to true when w
 // Shaders
 static const char* CAPTURE_VS = ""
   "#version 330\n"
-  "uniform mat4 u_pm;"
   ""
   "const vec2 pos[] = vec2[4]("
   "  vec2(-1.0,  1.0), "
