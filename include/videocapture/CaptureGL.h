@@ -116,6 +116,33 @@ static const char* CAPTURE_GL_YUYV422_FS = ""
   "}"
   "";
 
+// Decode YUV420P (3 planes)
+static const char* CAPTURE_GL_YUV420P_FS = ""
+  "#version 330\n"
+  "uniform sampler2D y_tex;"
+  "uniform sampler2D u_tex;"
+  "uniform sampler2D v_tex;"
+  "in vec2 v_texcoord;"
+  "layout( location = 0 ) out vec4 fragcolor;"
+  ""
+  "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
+  "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
+  "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
+  "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+  ""
+  "void main() {"
+  "  float y = texture(y_tex, v_texcoord).r;"
+  "  float u = texture(u_tex, v_texcoord).r;"
+  "  float v = texture(v_tex, v_texcoord).r;"
+  "  vec3 yuv = vec3(y,u,v);"
+  "  yuv += offset;"
+  "  fragcolor = vec4(0.0, 0.0, 0.0, 1.0);"
+  "  fragcolor.r = dot(yuv, R_cf);"
+  "  fragcolor.g = dot(yuv, G_cf);"
+  "  fragcolor.b = dot(yuv, B_cf);"
+  "}"
+  "";
+
 namespace ca {
 
   void capturegl_on_frame(void* pixels, int nbytes, void* user);                      /* Is called whenever a frame is received from the capture device */
@@ -140,6 +167,7 @@ namespace ca {
     int setupShaders();                                                                /* Creates shaders for the pixel format */
     int setupTextures();                                                               /* Creates the textures that back the current pixel format */
     void updateYUYV422();                                                              /* Updates the YUYV422 pixel data */
+    void updateYUV420P();
 
   public:
     int fmt;                                                                           /* The pixel format we use. Used to setup graphics state */
@@ -157,8 +185,12 @@ namespace ca {
     GLuint vao;                                                                        /* We need a VAO to render attribute-less */
     GLint u_pos;                                                                       /* Points to the u_pos in the vertex shader; used to scale and offset the vertex position */
     GLint u_tex0;                                                                      /* Points to the first texture element in the frag shader. */
+    GLint u_tex1;                                                                      /* Points to the second plane (e.g. when format is YUV420P) */
+    GLint u_tex2;                                                                      /* Points to the thirds plane (e.g. when format is YUV420P) */
     GLuint tex0;                                                                       /* Texture that will be filled with the pixel data from the webcam */
-    unsigned char* pixels;                                                             /* When we use the YUYV422 this will hold all the data */
+    GLuint tex1;                                                                       /* Texture that will be filled with the pixel data from the webcam (e.g. the U plane when using YUV420P). */
+    GLuint tex2;                                                                       /* Texture that will be filled with the pixel data from the webcam (e.g. the U plane when using YUV420P). */
+    unsigned char* pixels;                                                             /* When we use the YUYV422/YUV420 this will hold all the data */
     bool needs_update;                                                                 /* Is set to true when we receive a new frame */
   };
 
@@ -166,6 +198,20 @@ namespace ca {
   inline void CaptureGL::updateYUYV422() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+  }
+
+  // Update the YUV420P Pixels
+  inline void CaptureGL::updateYUV420P() {
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    
+    glBindTexture(GL_TEXTURE_2D, tex0);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_RED, GL_UNSIGNED_BYTE, pixels + frame.offset[0]);
+
+    glBindTexture(GL_TEXTURE_2D, tex1);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[1], frame.height[1], GL_RED, GL_UNSIGNED_BYTE, pixels + frame.offset[1]);
+
+    glBindTexture(GL_TEXTURE_2D, tex2);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[2], frame.height[2], GL_RED, GL_UNSIGNED_BYTE, pixels + frame.offset[2]);
   }
 
 
@@ -180,7 +226,7 @@ namespace ca {
 
     CaptureGL* gl = static_cast<CaptureGL*>(user);
 
-    if(gl->fmt == CA_YUYV422) {
+    if(gl->fmt == CA_YUYV422 || gl->fmt == CA_YUV420P) {
       memcpy((char*)gl->pixels, (char*)pixels, nbytes);
       gl->needs_update = true;
     }
@@ -213,7 +259,11 @@ namespace ca {
     ,vao(0)
     ,u_pos(0)
     ,u_tex0(0)
+    ,u_tex1(0)
+    ,u_tex2(0)
     ,tex0(0)
+    ,tex1(0)
+    ,tex2(0)
     ,pixels(NULL)
     ,needs_update(false)
     {
@@ -233,6 +283,8 @@ namespace ca {
     inv_win_h = 0.0f;
     u_pos = 0;
     u_tex0 = 0;
+    u_tex1 = 0;
+    u_tex2 = 0;
     
     // @todo - free GL 
   }
@@ -280,10 +332,12 @@ namespace ca {
     }
 
     if(cap.open(settings) < 0) {
+      printf("Error: cannot open the capture device.\n");
       return -2;
     }
 
     if(setupGraphics() < 0) {
+      printf("Error: cannot setup the GL graphics.\n");
       return -3;
     }
 
@@ -307,7 +361,10 @@ namespace ca {
     
     if(needs_update) {
 
-      if(fmt == CA_YUYV422) {
+      if(fmt == CA_YUV420P) {
+        updateYUV420P();
+      }
+      else if(fmt == CA_YUYV422) {
         updateYUYV422();
       }
 
@@ -332,7 +389,7 @@ namespace ca {
     }
 
     if(setupTextures() < 0) {
-      return -1;
+      return -2;
     }
 
     return 1;
@@ -344,6 +401,7 @@ namespace ca {
 
     // select the correct fragment shader
     if(fmt == CA_YUV420P) {
+      frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUV420P_FS);
     }
     else if(fmt == CA_YUYV422) {
       frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUYV422_FS);
@@ -360,6 +418,12 @@ namespace ca {
     glUseProgram(prog);
 
     if(fmt == CA_YUV420P) {
+      u_tex0 = glGetUniformLocation(prog, "y_tex");
+      u_tex1 = glGetUniformLocation(prog, "u_tex");
+      u_tex2 = glGetUniformLocation(prog, "v_tex");
+      glUniform1i(u_tex0, 0);
+      glUniform1i(u_tex1, 1);
+      glUniform1i(u_tex2, 2);
     }
     else if(fmt == CA_YUYV422) {
       u_tex0 = glGetUniformLocation(prog, "u_tex");
@@ -380,7 +444,34 @@ namespace ca {
     }
     
     // create textures to the back the pixel format.
-    if(fmt == CA_YUYV422) {
+    if(fmt == CA_YUV420P) {
+      pixels = new unsigned char[frame.nbytes[0] + frame.nbytes[1] + frame.nbytes[2]];
+
+      glGenTextures(1, &tex0);
+      glBindTexture(GL_TEXTURE_2D, tex0);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[0], frame.height[0], 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+      glGenTextures(1, &tex1);
+      glBindTexture(GL_TEXTURE_2D, tex1);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[1], frame.height[1], 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+      glGenTextures(1, &tex2);
+      glBindTexture(GL_TEXTURE_2D, tex2);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width[2], frame.height[2], 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else if(fmt == CA_YUYV422) {
 
       pixels = new unsigned char[frame.nbytes[0]];
 
@@ -393,6 +484,7 @@ namespace ca {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     else {
+      printf("Error: unhandled pixel format in CaptureGL.\n");
       return -1;
     }
 
@@ -407,9 +499,16 @@ namespace ca {
 
     glUseProgram(prog);
     glBindVertexArray(vao);
-    
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex0);
+
+    if(fmt == CA_YUV420P) {
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, tex1);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, tex2);
+    }
 
     glUniform4f(u_pos, 
                 x * inv_win_w * 2.0, 

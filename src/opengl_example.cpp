@@ -116,7 +116,7 @@ static const char* CAPTURE_YUYV422_FS = ""
   "}"
   "";
 
-// Decode YUV410P (3 planes)
+// Decode YUV420P (3 planes)
 static const char* CAPTURE_YUV420P_FS = ""
   "#version 330\n"
   "uniform sampler2D y_tex;"

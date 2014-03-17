@@ -87,6 +87,7 @@ int main() {
   // ----------------------------------------------------------------
   CaptureGL capture;
   if(capture.open(0, w, h) < 0) {
+    printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
 

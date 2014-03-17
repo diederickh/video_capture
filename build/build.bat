@@ -39,5 +39,7 @@ cmake --build . --target install --config %cmake_bt%
 :: cmake --build .  
 :: cd Debug
 :: videocapture.exe
+cd ..\..\install\%bd%\bin
+easy_opengl_example.exe
 cd %d%
 
