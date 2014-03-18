@@ -100,7 +100,9 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     capture.update();
-    capture.draw(100, 100, 320, 240);
+    //capture.draw();
+    capture.draw(200, 10, 160, 120);
+                 
 
     glfwSwapBuffers(win);
     glfwPollEvents();

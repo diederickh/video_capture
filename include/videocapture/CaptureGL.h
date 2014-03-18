@@ -73,9 +73,10 @@ static const char* CAPTURE_GL_VS = ""
   ""
   "void main() { "
   "  vec2 p = pos[gl_VertexID]; " 
-  "  gl_Position = vec4(p.x * u_pos.z + u_pos.x, "
-  "                     p.y * u_pos.w + u_pos.y, "
+  "  gl_Position = vec4(u_pos.x * 2.0 + p.x, "
+  "                     u_pos.y * 2.0 + p.y, " 
   "                     0.0, 1.0);"
+
   "  v_texcoord = tex[gl_VertexID];"
   "}"
   "";
@@ -510,11 +511,15 @@ namespace ca {
       glBindTexture(GL_TEXTURE_2D, tex2);
     }
 
+    /*
+                -0.5 + x * inv_win_w * 2.0, 
+                -0.5 + y * inv_win_h * 2.0, 
+     */
     glUniform4f(u_pos, 
-                x * inv_win_w * 2.0, 
-                y * inv_win_h * 2.0, 
-                w * inv_win_w, 
-                h * inv_win_h);
+                x * inv_win_w , 
+                y * inv_win_h  , 
+                w * inv_win_w , 
+                h * inv_win_h );
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
