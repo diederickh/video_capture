@@ -56,10 +56,10 @@ static const char* CAPTURE_GL_VS = ""
   "uniform vec4 u_pos; " 
   ""
   "const vec2 pos[] = vec2[4]("
-  "  vec2(-1.0,  1.0), "
-  "  vec2(-1.0, -1.0), "
+  "  vec2(0.0,  1.0), "
+  "  vec2(0.0, 0.0), "
   "  vec2( 1.0,  1.0), "
-  "  vec2( 1.0, -1.0)  "
+  "  vec2( 1.0, 0.0)  "
   ");"
   ""
   " const vec2[] tex = vec2[4]( "
@@ -71,12 +71,19 @@ static const char* CAPTURE_GL_VS = ""
   ""
   "out vec2 v_texcoord; "
   ""
+  /*
+    u_pos.x = X position in percentage of viewport 0-1. 0% means -1.0
+    u_pos.y = Y position in percentage of viewport 0-1. 0% means -1.0
+    u_pos.z = WIDTH scale in percentage of viewport. 
+    u_pos.w = HEIGHT scale in percentage of viewport. 
+   */
   "void main() { "
   "  vec2 p = pos[gl_VertexID]; " 
-  "  gl_Position = vec4(u_pos.x * 2.0 + p.x, "
-  "                     u_pos.y * 2.0 + p.y, " 
+  "  vec2 offset = vec2(u_pos.x * 2.0 - 1.0, u_pos.y * 2.0 - 1.0); "
+  "  vec2 scale  = vec2(u_pos.z * p.x * 2.0, u_pos.w * p.y * 2.0); " 
+  "  gl_Position = vec4(offset.x + scale.x, "
+  "                     offset.y + scale.y, "
   "                     0.0, 1.0);"
-
   "  v_texcoord = tex[gl_VertexID];"
   "}"
   "";
@@ -511,10 +518,6 @@ namespace ca {
       glBindTexture(GL_TEXTURE_2D, tex2);
     }
 
-    /*
-                -0.5 + x * inv_win_w * 2.0, 
-                -0.5 + y * inv_win_h * 2.0, 
-     */
     glUniform4f(u_pos, 
                 x * inv_win_w , 
                 y * inv_win_h  , 

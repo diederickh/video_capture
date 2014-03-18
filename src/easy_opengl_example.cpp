@@ -58,8 +58,8 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   
   GLFWwindow* win = NULL;
-  int w = 640;
-  int h = 480;
+  int w = 1024;
+  int h = 768;
 
   win = glfwCreateWindow(w, h, "Capture", NULL, NULL);
   if(!win) {
@@ -86,7 +86,7 @@ int main() {
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
   CaptureGL capture;
-  if(capture.open(0, w, h) < 0) {
+  if(capture.open(0, 640, 480) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
@@ -100,9 +100,8 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     capture.update();
-    //capture.draw();
-    capture.draw(200, 10, 160, 120);
-                 
+    capture.draw();
+    capture.draw(10, 10, 320, 240);
 
     glfwSwapBuffers(win);
     glfwPollEvents();
