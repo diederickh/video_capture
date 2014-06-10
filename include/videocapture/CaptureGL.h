@@ -34,6 +34,11 @@
         printf("Error: Can't open the capture device.\n");
         ::exit(EXIT_FAILURE);
       }
+
+      if(capture.start() < 0) {
+        printf("Error: Can't start the capture.\n");
+        ::exit(EXIT_FAILURE);
+      }
     
       while(rendering) {
         capture.update();
