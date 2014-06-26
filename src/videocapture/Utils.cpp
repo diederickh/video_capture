@@ -12,8 +12,6 @@ namespace ca {
     sscanf(buf, "%f", &fps);
     int v = (fps * 100);
 
-    printf("v %d\n", v);
-
     switch(v) {
       case CA_FPS_60_00: return CA_FPS_60_00;
       case CA_FPS_30_00: return CA_FPS_30_00; 
