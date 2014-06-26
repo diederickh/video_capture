@@ -1,3 +1,4 @@
+/* -*-C-*- */
 #import <videocapture/mac/AVFoundation_Implementation.h>
 
 @implementation AVFoundation_Implementation 
@@ -323,27 +324,29 @@
     fps_dx = 0;
 
     for(AVFrameRateRange* fps in [f videoSupportedFrameRateRanges]) {
+
+      ca::Capability cap;
       
       if ([fps minFrameRate] != [fps maxFrameRate]) {
-        printf("Need to handle a capability with different min/max framerates.\n");
-        printf("min: %f, max: %f\n", [fps minFrameRate], [fps maxFrameRate]);
+        printf("@todo -  Need to handle a capability with different min/max framerates. This works but need more testing.\n");
+        cap.fps = ca::fps_from_rational((uint64_t)1, (uint64_t) [fps maxFrameRate]);
+      }
+      else {
+        CMTime dur = [fps maxFrameDuration];
+        cap.fps = ca::fps_from_rational((uint64_t)dur.value, (uint64_t)dur.timescale);
       }
 
-     ca::Capability cap;
+      cap.width = dims.width;
+      cap.height = dims.height;
+      cap.pixel_format = [self getCapturePixelFormat: fmt_sub_type];
+      cap.user = (void*) f;
+      cap.capability_index = (int) result.size();
+      cap.fps_index = fps_dx;
+      cap.pixel_format_index = fmt_dx;
 
-     CMTime dur = [fps maxFrameDuration];
-     cap.fps = ca::fps_from_rational((uint64_t)dur.value, (uint64_t)dur.timescale);
-     cap.width = dims.width;
-     cap.height = dims.height;
-     cap.pixel_format = [self getCapturePixelFormat: fmt_sub_type];
-     cap.user = (void*) f;
-     cap.capability_index = (int) result.size();
-     cap.fps_index = fps_dx;
-     cap.pixel_format_index = fmt_dx;
+      result.push_back(cap);
 
-     result.push_back(cap);
-
-     ++fps_dx;
+      ++fps_dx;	
     }
     fmt_dx++;
   }
