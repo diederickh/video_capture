@@ -86,7 +86,11 @@ int main() {
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
   CaptureGL capture;
-  if(capture.open(0, 640, 480) < 0) {
+
+  //capture.cap.listDevices();
+  //capture.cap.listCapabilities(1);
+
+  if(capture.open(1, 640, 480) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }

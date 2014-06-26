@@ -25,7 +25,7 @@ Pixel format
   A pixel format describes how the bytes of a video frame are stored. 
   Common pixel formats for Video Capture are YUYV422, UYVV422 and YUV420P.
   Some OSes can convert between pixel formats (Mac). See [libyuvs](https://code.google.com/p/libyuv/wiki/Formats)
-  documentation for some more info on format mappings.
+  documentation for some more info on format mappings..
 
 Output formats
   Some SDKs have optimized solutions to decode a video stream you 
