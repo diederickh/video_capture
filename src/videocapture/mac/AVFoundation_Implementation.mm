@@ -68,7 +68,7 @@
     // Get the capabilities for this device
     std::vector<ca::Capability> capabilities;
     [self getCapabilities: capabilities forDevice: settings.device];
-    assert(capabilites.size() > 0);
+    assert(capabilities.size() > 0);
     ca::Capability cap = capabilities[settings.capability];
 
     // Get the best matching session preset.
