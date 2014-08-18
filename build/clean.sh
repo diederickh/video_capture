@@ -11,3 +11,4 @@ fi
 if [ -d build.debug ] ; then 
     rm -r build.debug
 fi
+

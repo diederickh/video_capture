@@ -21,7 +21,7 @@
       
       // include here your GL headers (e.g. using GLFW)
   
-      #define VIDEOCAPTURE_IMPLEMENTATION
+      #define VIDEO_CAPTURE_IMPLEMENTATION
       #include <videocapture/CaptureGL.h>  
 
   
