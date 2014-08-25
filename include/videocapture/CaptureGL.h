@@ -209,6 +209,7 @@ namespace ca {
 
   // Update the YUYV422 Pixels
   inline void CaptureGL::updateYUYV422() {
+    glBindTexture(GL_TEXTURE_2D, u_tex0);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
   }

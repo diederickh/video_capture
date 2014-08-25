@@ -146,24 +146,25 @@ include_directories(${videocapture_include_dirs})
 add_library(videocapture ${videocapture_sources})
 
 # Basic API example
-add_executable(api_example ${sd}/api_example.cpp)
-target_link_libraries(api_example ${videocapture_libraries} videocapture)
-add_dependencies(api_example video_capture)
-install(TARGETS api_example RUNTIME DESTINATION bin)
-
 if(USE_OPENGL)
+  add_executable(api_example ${sd}/api_example.cpp)
+  target_link_libraries(api_example ${videocapture_libraries} videocapture)
+  add_dependencies(api_example video_capture)
+  install(TARGETS api_example RUNTIME DESTINATION bin)
+
   # Plain OpenGL example
   # add_executable(opengl_example ${sd}/opengl_example.cpp) 
   # target_link_libraries(opengl_example ${videocapture_libraries} videocapture)
   # add_dependencies(opengl_example videocapture)
   # install(TARGETS opengl_example RUNTIME DESTINATION bin)
-endif()
 
-# Using the simple wrapper
-add_executable(easy_opengl_example ${sd}/easy_opengl_example.cpp) 
-target_link_libraries(easy_opengl_example ${videocapture_libraries} videocapture)
-add_dependencies(easy_opengl_example videocapture)
-install(TARGETS easy_opengl_example RUNTIME DESTINATION bin)
+  # Using the simple wrapper
+  add_executable(easy_opengl_example ${sd}/easy_opengl_example.cpp) 
+  target_link_libraries(easy_opengl_example ${videocapture_libraries} videocapture)
+  add_dependencies(easy_opengl_example videocapture)
+  install(TARGETS easy_opengl_example RUNTIME DESTINATION bin)
+
+endif()
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
