@@ -174,6 +174,10 @@ namespace ca {
     void resize(int w, int h);                                                         /* Call w/h when the viewport resizes */
     void draw();                                                                       /* Draw, filling the the viewport */
     void draw(int x, int y, int w, int h);                                             /* Draw the current frame at x,y and w/h */
+    int listDevices();                                                                 /* Wrapper around Capture::listDevices(). */
+    std::vector<Capability> getCapabilities(int device);                               /* Get the capabilities for the given device. */
+    std::vector<Device> getDevices();                                                  /* Get a vector with the devices. */
+    std::vector<Format> getOutputFormats();                                            /* Get the output formats that we can use. */ 
 
   private:
     int setupGraphics();                                                               /* Creates the opengl objects */
@@ -392,6 +396,22 @@ namespace ca {
 
   int CaptureGL::stop() {
     return cap.stop();
+  }
+
+  int CaptureGL::listDevices() {
+    return cap.listDevices();
+  }
+
+  std::vector<Device> CaptureGL::getDevices() {
+    return cap.getDevices();
+  }
+
+  std::vector<Capability> CaptureGL::getCapabilities(int device) {
+    return cap.getCapabilities(device);
+  }
+
+  std::vector<Format> CaptureGL::getOutputFormats() {
+    return cap.getOutputFormats();
   }
 
   int CaptureGL::setupGraphics() {
