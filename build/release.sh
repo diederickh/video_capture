@@ -1,5 +1,7 @@
 #!/bin/sh
 
+d=${PWD}
+
 if [ ! -d build.release ] ; then
     mkdir build.release
 fi

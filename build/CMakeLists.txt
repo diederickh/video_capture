@@ -72,6 +72,7 @@ if(APPLE)
       ${fr_iokit}
       )
   endif()
+
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -146,6 +147,7 @@ include_directories(${videocapture_include_dirs})
 add_library(videocapture ${videocapture_sources})
 
 # Basic API example
+
 if(USE_OPENGL)
   add_executable(api_example ${sd}/api_example.cpp)
   target_link_libraries(api_example ${videocapture_libraries} videocapture)
