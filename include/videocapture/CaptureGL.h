@@ -126,6 +126,7 @@ static const char* CAPTURE_GL_YUYV422_FS = ""
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
   "  fragcolor.a = 1.0;"
+  "  fragcolor.r = 1.0;"
   "}"
   "";
 
@@ -174,10 +175,17 @@ namespace ca {
     void resize(int w, int h);                                                         /* Call w/h when the viewport resizes */
     void draw();                                                                       /* Draw, filling the the viewport */
     void draw(int x, int y, int w, int h);                                             /* Draw the current frame at x,y and w/h */
-    int listDevices();                                                                 /* Wrapper around Capture::listDevices(). */
+
+    /* Capabilities */
     std::vector<Capability> getCapabilities(int device);                               /* Get the capabilities for the given device. */
     std::vector<Device> getDevices();                                                  /* Get a vector with the devices. */
     std::vector<Format> getOutputFormats();                                            /* Get the output formats that we can use. */ 
+    
+    /* Info */
+    int listDevices();                                                                 /* Wrapper around Capture::listDevices(). */
+    int listCapabilities(int device);                                                  /* Wrapper around Capture::listCapabilities(). */
+    int listOutputFormats();                                                           /* Wrapper around Capture::listOutputFormats(). */
+    int findCapability(int device, int width, int height, int fmt);                    /* Wrapper around Capture::findCapability() */
 
   private:
     int setupGraphics();                                                               /* Creates the opengl objects */
@@ -230,6 +238,22 @@ namespace ca {
 
     glBindTexture(GL_TEXTURE_2D, tex2);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[2], frame.height[2], GL_RED, GL_UNSIGNED_BYTE, pixels + frame.offset[2]);
+  }
+
+  // Some wrappers around ca::Capture
+  inline int CaptureGL::listDevices() {
+    return cap.listDevices();
+  }
+                         
+  inline int CaptureGL::listCapabilities(int device) {
+    return cap.listCapabilities(device);
+  }          
+  inline int CaptureGL::listOutputFormats() {
+    return cap.listOutputFormats();
+  }                   
+
+  inline int CaptureGL::findCapability(int device, int width, int height, int fmt) {
+    return cap.findCapability(device, width, height, fmt);
   }
 
 
@@ -396,10 +420,6 @@ namespace ca {
 
   int CaptureGL::stop() {
     return cap.stop();
-  }
-
-  int CaptureGL::listDevices() {
-    return cap.listDevices();
   }
 
   std::vector<Device> CaptureGL::getDevices() {
