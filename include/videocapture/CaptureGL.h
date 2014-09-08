@@ -13,20 +13,30 @@
   can include the openGL headers using your own wrapper or system dependent GL file.
   In one file, we recommend main.cpp, define VIDEOCAPTURE_IMPLEMENTATION before you 
   include the <videocapture/CaptureGL.h>. 
+
+
+  Extensions
+  -----------
+  
+  VIDEO_CATURE_USE_APPLE_RGB_422
+          When you add a define like `#define VIDEO_CAPTURE_USE_APPLE_RGB_422` we 
+          will make sure of the APPLE rgb_422 extension which gives slightly better
+          visual quality. 
+
+          e.g.
+          #define VIDEO_CAPTURE_USE_APPLE_RGB_422
   
   Usage
   -----
   
   ````c++
-      
+
       // include here your GL headers (e.g. using GLFW)
-  
+      #define VIDEO_CAPTURE_USE_APPLE_RGB_422              // only use this if you want to use the rgb_422 extension: https://www.opengl.org/registry/specs/APPLE/rgb_422.txt, make sure it's loaded 
       #define VIDEO_CAPTURE_IMPLEMENTATION
       #include <videocapture/CaptureGL.h>  
 
-  
       // ...
-
       
       ca::CaptureGL capture;
       
@@ -59,20 +69,58 @@
 static const char* CAPTURE_GL_VS = ""
   "#version 330\n"
   "uniform vec4 u_pos; " 
+  //  "uniform int u_tc_index;" /* where to start fetching the texcoords, to flip the input */
+  "uniform float u_texcoords[8]; "
   ""
-  "const vec2 pos[] = vec2[4]("
+  "const vec2 pos[4] = vec2[4]("
   "  vec2(0.0,  1.0), "
   "  vec2(0.0, 0.0), "
   "  vec2( 1.0,  1.0), "
   "  vec2( 1.0, 0.0)  "
   ");"
-  ""
-  " const vec2[] tex = vec2[4]( "
+
+
+  " const vec2[4] tex = vec2[4]( "
   "   vec2(0.0, 0.0), "
   "   vec2(0.0, 1.0), "
   "   vec2(1.0, 0.0), "
   "   vec2(1.0, 1.0) "
   ");"
+
+#if 0
+  ""
+  /* normal */
+  " const vec2[] tex_normal = vec2[4]( "
+  "   vec2(0.0, 0.0), "
+  "   vec2(0.0, 1.0), "
+  "   vec2(1.0, 0.0), "
+  "   vec2(1.0, 1.0) "
+  ");"
+
+  /* flip vertical */
+  " const vec2[] tex_vert = vec2[4]( "
+  "   vec2(0.0, 1.0), "
+  "   vec2(0.0, 0.0), "
+  "   vec2(1.0, 1.0), "
+  "   vec2(1.0, 0.0) "
+  ");"
+
+  /* flip horizontal */
+  " const vec2[] tex_hori = vec2[4]( "
+  "   vec2(1.0, 0.0), "
+  "   vec2(1.0, 1.0), "
+  "   vec2(0.0, 0.0), "
+  "   vec2(0.0, 1.0) "
+  ");"
+
+  /* flip vertical + horizontal */
+  " const vec2[] tex_verthori = vec2[4]( "
+  "   vec2(1.0, 1.0), "
+  "   vec2(1.0, 0.0), "
+  "   vec2(0.0, 1.0), "
+  "   vec2(0.0, 0.0) "
+  ");"
+#endif
   ""
   "out vec2 v_texcoord; "
   ""
@@ -89,11 +137,47 @@ static const char* CAPTURE_GL_VS = ""
   "  gl_Position = vec4(offset.x + scale.x, "
   "                     offset.y + scale.y, "
   "                     0.0, 1.0);"
-  "  v_texcoord = tex[gl_VertexID];"
+
+#if 0
+  " v_texcoord = vec2(u_texcoords[gl_VertexID * 2], u_texcoords[gl_VertexID * 2 + 1]);"
+#else 
+  " v_texcoord = tex[gl_VertexID];"
+#endif
   "}"
   "";
 
 // Decode YUV422 data (Y0 Cb Y1 Cr)
+#if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422)
+
+/* Uses the APPLE RGB 422 extension */
+static const char* CAPTURE_GL_YUYV422_FS = ""
+  "#version 330\n"
+  "uniform sampler2D u_tex;"
+  "layout( location = 0 ) out vec4 outcol; "
+
+  "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
+  "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
+  "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
+  "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+ 
+  "in vec2 v_texcoord;"
+  ""
+  "void main() {"
+  "  vec3 tc =  texture( u_tex, v_texcoord ).rgb;"
+  "  vec3 yuv = vec3(tc.g, tc.b, tc.r);"
+  "  yuv += offset;"
+  "  outcol.r = dot(yuv, R_cf);"
+  "  outcol.g = dot(yuv, G_cf);"
+  "  outcol.b = dot(yuv, B_cf);"
+  "  outcol.a = 1.0;"
+  //  "  outcol.rg = v_texcoord;"
+  //  "  outcol = vec4(0.0, 0.0, 0.2, 1.0);"
+  "}"
+  "";
+
+#else 
+
+/* Custom YUYV422, or YUV 4:2:2 (same thing, different names) shader */
 static const char* CAPTURE_GL_YUYV422_FS = ""
   "#version 330\n"
   ""
@@ -126,9 +210,11 @@ static const char* CAPTURE_GL_YUYV422_FS = ""
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
   "  fragcolor.a = 1.0;"
-  "  fragcolor.r = 1.0;"
   "}"
   "";
+
+#endif
+
 
 // Decode YUV420P (3 planes)
 static const char* CAPTURE_GL_YUV420P_FS = ""
@@ -175,6 +261,7 @@ namespace ca {
     void resize(int w, int h);                                                         /* Call w/h when the viewport resizes */
     void draw();                                                                       /* Draw, filling the the viewport */
     void draw(int x, int y, int w, int h);                                             /* Draw the current frame at x,y and w/h */
+    void flip(bool horizontal, bool vertical);                                         /* Flip the video horizontally or vertically. Following photoshop conventions. */
 
     /* Capabilities */
     std::vector<Capability> getCapabilities(int device);                               /* Get the capabilities for the given device. */
@@ -209,6 +296,7 @@ namespace ca {
     GLuint prog;                                                                       /* The shader program */  
     GLuint vao;                                                                        /* We need a VAO to render attribute-less */
     GLint u_pos;                                                                       /* Points to the u_pos in the vertex shader; used to scale and offset the vertex position */
+    GLint u_texcoords;                                                                 /* Offset into the texcoord array in the shader to flip vertically and horizontally */
     GLint u_tex0;                                                                      /* Points to the first texture element in the frag shader. */
     GLint u_tex1;                                                                      /* Points to the second plane (e.g. when format is YUV420P) */
     GLint u_tex2;                                                                      /* Points to the thirds plane (e.g. when format is YUV420P) */
@@ -217,13 +305,21 @@ namespace ca {
     GLuint tex2;                                                                       /* Texture that will be filled with the pixel data from the webcam (e.g. the U plane when using YUV420P). */
     unsigned char* pixels;                                                             /* When we use the YUYV422/YUV420 this will hold all the data */
     bool needs_update;                                                                 /* Is set to true when we receive a new frame */
+
   };
 
   // Update the YUYV422 Pixels
   inline void CaptureGL::updateYUYV422() {
+
     glBindTexture(GL_TEXTURE_2D, u_tex0);
+
+#  if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422)
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, (uint16_t*)pixels);
+#  else
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+#  endif
+
   }
 
   // Update the YUV420P Pixels
@@ -248,6 +344,7 @@ namespace ca {
   inline int CaptureGL::listCapabilities(int device) {
     return cap.listCapabilities(device);
   }          
+
   inline int CaptureGL::listOutputFormats() {
     return cap.listOutputFormats();
   }                   
@@ -258,6 +355,12 @@ namespace ca {
 
 
 #if defined(VIDEO_CAPTURE_IMPLEMENTATION)
+
+  /* -------------------------------------- */
+
+  static int print_shader_compile_info(GLuint shader); 
+  static int print_program_link_info(GLuint prog);
+
   /* -------------------------------------- */
 
   void capturegl_on_frame(void* pixels, int nbytes, void* user) {
@@ -281,6 +384,7 @@ namespace ca {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &source, NULL);
     glCompileShader(s);
+    print_shader_compile_info(s);
     return s;
   }
 
@@ -300,6 +404,7 @@ namespace ca {
     ,prog(0)
     ,vao(0)
     ,u_pos(0)
+    ,u_texcoords(0)
     ,u_tex0(0)
     ,u_tex1(0)
     ,u_tex2(0)
@@ -324,6 +429,7 @@ namespace ca {
     inv_win_w = 0.0f;
     inv_win_h = 0.0f;
     u_pos = 0;
+    u_texcoords = 0;
     u_tex0 = 0;
     u_tex1 = 0;
     u_tex2 = 0;
@@ -446,11 +552,14 @@ namespace ca {
       return -2;
     }
 
+    /* set default texture coordinates. */
+    flip(false, false);
+
     return 1;
   }
 
   int CaptureGL::setupShaders() {
-    
+
     vert = capturegl_create_shader(GL_VERTEX_SHADER, CAPTURE_GL_VS);
 
     // select the correct fragment shader
@@ -469,6 +578,9 @@ namespace ca {
     glAttachShader(prog, vert);
     glAttachShader(prog, frag);
     glLinkProgram(prog);
+
+    print_program_link_info(prog);
+
     glUseProgram(prog);
 
     if(fmt == CA_YUV420P) {
@@ -485,7 +597,8 @@ namespace ca {
     }
     
     u_pos = glGetUniformLocation(prog, "u_pos");
-
+    u_texcoords = glGetUniformLocation(prog, "u_texcoords");
+   
     glUseProgram(0);
     return 1;
   }
@@ -528,14 +641,22 @@ namespace ca {
     else if(fmt == CA_YUYV422) {
 
       pixels = new unsigned char[frame.nbytes[0]];
+      memset(pixels, 0x00, frame.nbytes[0]);
 
       glGenTextures(1, &tex0);
       glBindTexture(GL_TEXTURE_2D, tex0);
+
+#if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422) 
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, pixels);
+#else
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+#endif
+
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     }
     else {
       printf("Error: unhandled pixel format in CaptureGL.\n");
@@ -543,6 +664,42 @@ namespace ca {
     }
 
     return  1;
+  }
+
+  void CaptureGL::flip(bool horizontal, bool vertical) {
+
+    int dx = 0; 
+    float* texcoords = NULL;
+    float tex_normal[] =     { 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 } ;
+    float tex_vert[] =       { 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0 } ;
+    float tex_hori[] =       { 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0 } ;
+    float tex_verthori[] =   { 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 } ;
+
+    if (NULL == pixels || 0 == prog) {
+      printf("You're trying to flip the capture device but we're not yet setup.");
+      return;
+    }
+
+    if (false == horizontal && false == vertical) {
+      texcoords = tex_normal;
+    }
+    else if(false == horizontal && true == vertical) {
+      texcoords = tex_vert;
+    }
+    else if(true == horizontal && false == vertical) {
+      texcoords = tex_hori;
+    }
+    else if (true == horizontal && true == vertical) {
+      texcoords = tex_verthori;
+    }
+    
+    if (NULL == texcoords) {
+      printf("Error: texcoords == NULL\n");
+      return;
+    }
+
+    glUseProgram(prog);
+    glUniform1fv(u_texcoords, 8, texcoords);
   }
 
   void CaptureGL::draw() {
@@ -580,6 +737,72 @@ namespace ca {
     win_h = h;
   }
 
+  /* checks the compile info, if it didn't compile we return < 0, otherwise 0 */
+  static int print_shader_compile_info(GLuint shader) {
+ 
+      GLint status = 0;
+      GLint count = 0;
+      GLchar* error = NULL;
+ 
+      glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+      if(status) {
+         return 0;
+      }
+ 
+      error = (GLchar*) malloc(count);
+      glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &count);
+      if(count <= 0) {
+        free(error);
+        error = NULL;
+        return 0;
+      }
+ 
+      glGetShaderInfoLog(shader, count, NULL, error);
+      printf("\nSHADER COMPILE ERROR");
+      printf("\n--------------------------------------------------------\n");
+      printf("%s", error);
+      printf("--------------------------------------------------------\n\n");
+ 
+      free(error);
+      error = NULL;
+      return -1;
+  }
+
+  /* checks + prints program link info. returns 0 when linking didn't result in an error, on link erorr < 0 */
+  static int print_program_link_info(GLuint prog) {
+    GLint status = 0;
+    GLint count = 0;
+    GLchar* error = NULL;
+    GLsizei nchars = 0;
+
+    glGetProgramiv(prog, GL_LINK_STATUS, &status);
+    if(status) {
+      return 0;
+    }
+
+    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &count);
+    if(count <= 0) {
+      return 0;
+    }
+
+    error = (GLchar*)malloc(count);
+    glGetProgramInfoLog(prog, count, &nchars, error);
+    if (nchars <= 0) {
+      free(error);
+      error = NULL;
+      return -1;
+    }
+
+    printf("\nPROGRAM LINK ERROR");
+    printf("\n--------------------------------------------------------\n");
+    printf("%s", error);
+    printf("--------------------------------------------------------\n\n");
+
+    free(error);
+    error = NULL;
+    return -1;
+  }
+ 
 #endif // #if defined(VIDEO_CAPTURE_IMPLEMENTATION)
 
 } // namespace ca
