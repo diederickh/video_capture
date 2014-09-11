@@ -79,13 +79,14 @@ static const char* CAPTURE_GL_VS = ""
   "  vec2( 1.0, 0.0)  "
   ");"
 
-
-  " const vec2[4] tex = vec2[4]( "
-  "   vec2(0.0, 0.0), "
-  "   vec2(0.0, 1.0), "
+  /* flip horizontal */
+  " const vec2[] tex = vec2[4]( "
   "   vec2(1.0, 0.0), "
-  "   vec2(1.0, 1.0) "
+  "   vec2(1.0, 1.0), "
+  "   vec2(0.0, 0.0), "
+  "   vec2(0.0, 1.0) "
   ");"
+
 
 #if 0
   ""
