@@ -4,6 +4,7 @@ namespace ca {
 
   // Convert the MF format to one we can use.
   int media_foundation_video_format_to_capture_format(GUID guid) {
+
     if(IsEqualGUID(guid, MFVideoFormat_RGB24))     { return CA_RGB24;   }
     else if(IsEqualGUID(guid, MFVideoFormat_I420)) { return CA_YUV420P; } 
     else if(IsEqualGUID(guid, MFVideoFormat_MJPG)) { return CA_MJPEG; } 

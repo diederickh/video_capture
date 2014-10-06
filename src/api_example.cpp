@@ -45,13 +45,11 @@ int main() {
   cap.listOutputFormats();
   cap.listCapabilities(cfg.device);
 
-  cfg.capability = cap.findCapability(cfg.device, width, height, CA_YUYV422);
+  int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
+  cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 3);
   if (!cfg.capability) {
-    cfg.capability = cap.findCapability(cfg.device, width, height, CA_UYVY422);
-    if (!cfg.capability) {
-      printf("Error: tried CA_YUYV422 and CA_UYVY formats; both didn't work.");
-      ::exit(EXIT_FAILURE);
-    }
+    printf("Error: tried CA_YUYV422 and CA_UYVY formats; both didn't work.");
+    ::exit(EXIT_FAILURE);
   }
 
   if(cap.open(cfg) < 0) {

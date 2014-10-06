@@ -147,12 +147,7 @@ include_directories(${videocapture_include_dirs})
 add_library(videocapture ${videocapture_sources})
 
 # Basic API example
-
 if(USE_OPENGL)
-  add_executable(api_example ${sd}/api_example.cpp)
-  target_link_libraries(api_example ${videocapture_libraries} videocapture)
-  add_dependencies(api_example video_capture)
-  install(TARGETS api_example RUNTIME DESTINATION bin)
 
   # Plain OpenGL example
   # add_executable(opengl_example ${sd}/opengl_example.cpp) 
@@ -167,6 +162,11 @@ if(USE_OPENGL)
   install(TARGETS easy_opengl_example RUNTIME DESTINATION bin)
 
 endif()
+
+add_executable(api_example ${sd}/api_example.cpp)
+target_link_libraries(api_example ${videocapture_libraries} videocapture)
+add_dependencies(api_example video_capture)
+install(TARGETS api_example RUNTIME DESTINATION bin)
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
