@@ -353,9 +353,13 @@ namespace ca {
   inline int CaptureGL::findCapability(int device, int width, int height, int fmt) {
     return cap.findCapability(device, width, height, fmt);
   }
+} /* namespace ca */
 
+#endif
 
 #if defined(VIDEO_CAPTURE_IMPLEMENTATION)
+
+namespace ca {
 
   /* -------------------------------------- */
 
@@ -803,9 +807,8 @@ namespace ca {
     error = NULL;
     return -1;
   }
- 
+} // namespace ca 
+
 #endif // #if defined(VIDEO_CAPTURE_IMPLEMENTATION)
 
-} // namespace ca
 
-#endif
