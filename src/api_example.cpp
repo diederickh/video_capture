@@ -45,6 +45,19 @@ int main() {
   cap.listOutputFormats();
   cap.listCapabilities(cfg.device);
 
+  std::vector<Capability> caps;
+  caps.push_back(Capability(width, height, CA_YUYV422));
+  caps.push_back(Capability(width, height, CA_UYVY422));
+  caps.push_back(Capability(width, height, CA_YUV420P));
+  cfg.capability = cap.findCapability(cfg.device, caps);
+  if (cfg.capability > 0) {
+    printf("Found capability: %d\n", cfg.capability);
+  }
+  else {
+    printf("Could not find any of the given capabilities.\n");
+  }
+  exit(0);
+
   int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
   cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 3);
   if (!cfg.capability) {

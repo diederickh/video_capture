@@ -69,6 +69,7 @@ namespace ca {
   class Capability {                                                                /* Capability represents a possibility for a capture device. It often is related to a width/height/fps. */
   public:
     Capability();
+    Capability(int width, int height, int pixfmt);                                  /* Create a capability with the given width, height and pixel format. */ 
     ~Capability();
     void clear();                                                                   /* Resets all members to defaults. */
 

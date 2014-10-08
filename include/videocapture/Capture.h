@@ -54,9 +54,10 @@ namespace ca {
     int listOutputFormats();                   
     int findCapability(int device, int width, int height, int fmt);
     int findCapability(int device, int width, int height, int* fmt, int nfmts);        /* Test several different capture formats. */
+    int findCapability(int device, std::vector<Capability> caps);                      /* Test the given capabilities in order and return the best one available. It wil the first found capability or -1 when none was found. */
 
   public:
-    Base* cap;                                                                                /* The capture implementation */
+    Base* cap;                                                                         /* The capture implementation */
   };
 
 } // namespace ca

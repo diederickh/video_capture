@@ -100,11 +100,24 @@ namespace ca {
     return cap->findCapability(device, width, height, fmt);
   }
 
+  int Capture::findCapability(int device, std::vector<Capability> caps) {
+    int capid = -1;
+    for (size_t i = 0; i < caps.size(); ++i) {
+      Capability& check = caps[i];
+      printf("%d, %d\n", check.width, check.height);
+      capid = cap->findCapability(device, check.width, check.height, check.pixel_format);
+      if (capid >= 0) {
+        break;
+      }
+    }
+    return capid;
+  }
+
   int Capture::findCapability(int device, int width, int height, int* fmts, int nfmts) {
     int capid = -1;
     for (int i = 0; i < nfmts; ++i) {
       capid = cap->findCapability(device, width, height, fmts[i]);
-      if (capid > 0) {
+      if (capid >= 0) {
         return capid;
       }
     }

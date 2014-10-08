@@ -8,6 +8,13 @@ namespace ca {
     clear();
   }
 
+  Capability::Capability(int w, int h, int pixfmt) {
+    clear();
+    width = w;
+    height = h;
+    pixel_format = pixfmt;
+  }
+
   Capability::~Capability() {
     clear();
   }
