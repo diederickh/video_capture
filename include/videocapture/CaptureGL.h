@@ -216,6 +216,41 @@ static const char* CAPTURE_GL_YUYV422_FS = ""
 
 #endif
 
+/* UYVY422 */
+static const char* CAPTURE_GL_UYVY422_FS = ""
+  "#version 330\n"
+  ""
+  "uniform sampler2D u_tex;"
+  "layout( location = 0 ) out vec4 fragcolor; "
+  "in vec2 v_texcoord;"
+  ""
+  "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
+  "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
+  "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
+  "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+  ""
+  "void main() {"
+  ""
+  "  int width = textureSize(u_tex, 0).x * 2;"
+  "  float tex_x = v_texcoord.x; "
+  "  int pixel = int(floor(width * tex_x)) % 2; "
+  "  vec4 tc =  texture( u_tex, v_texcoord ).rgba;"
+  ""
+  "  float cr = tc.r; "
+  "  float y1 = tc.g; "
+  "  float cb = tc.b; "
+  "  float y2 = tc.a; "
+  ""
+  "  float y = (pixel == 1) ? y2 : y1; "
+  "  vec3 yuv = vec3(y, cb, cr);"
+  "  yuv += offset;"
+  ""
+  "  fragcolor.r = dot(yuv, R_cf);"
+  "  fragcolor.g = dot(yuv, G_cf);"
+  "  fragcolor.b = dot(yuv, B_cf);"
+  "  fragcolor.a = 1.0;"
+  "}"
+  "";
 
 // Decode YUV420P (3 planes)
 static const char* CAPTURE_GL_YUV420P_FS = ""
@@ -376,7 +411,7 @@ namespace ca {
 
     CaptureGL* gl = static_cast<CaptureGL*>(user);
 
-    if(gl->fmt == CA_YUYV422 || gl->fmt == CA_YUV420P) {
+    if(gl->fmt == CA_YUYV422 || gl->fmt == CA_UYVY422 || gl->fmt == CA_YUV420P) {
       memcpy((char*)gl->pixels, (char*)pixels, nbytes);
       gl->needs_update = true;
     }
@@ -453,8 +488,8 @@ namespace ca {
     //cap.listCapabilities(device);
 
     // find the best matching capability
-    int caps[] = { CA_YUYV422, CA_YUV420P } ;
-    int num_caps = 2;
+    int caps[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
+    int num_caps = 3;
     for(int i = 0; i < num_caps; ++i) {
       settings.capability = cap.findCapability(device, width, height, caps[i]);
       if(settings.capability >= 0) {
@@ -517,7 +552,7 @@ namespace ca {
       if(fmt == CA_YUV420P) {
         updateYUV420P();
       }
-      else if(fmt == CA_YUYV422) {
+      else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
         updateYUYV422();
       }
 
@@ -568,11 +603,14 @@ namespace ca {
     vert = capturegl_create_shader(GL_VERTEX_SHADER, CAPTURE_GL_VS);
 
     // select the correct fragment shader
-    if(fmt == CA_YUV420P) {
+    if (fmt == CA_YUV420P) {
       frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUV420P_FS);
     }
-    else if(fmt == CA_YUYV422) {
+    else if (fmt == CA_YUYV422) {
       frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUYV422_FS);
+    }
+    else if (fmt == CA_UYVY422) {
+      frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_UYVY422_FS);
     }
     else {
       printf("Error: no shader yet for the current pixel format. \n");
@@ -596,7 +634,7 @@ namespace ca {
       glUniform1i(u_tex1, 1);
       glUniform1i(u_tex2, 2);
     }
-    else if(fmt == CA_YUYV422) {
+    else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
       u_tex0 = glGetUniformLocation(prog, "u_tex");
       glUniform1i(u_tex0, 0);
     }
@@ -643,7 +681,7 @@ namespace ca {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-    else if(fmt == CA_YUYV422) {
+    else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
 
       pixels = new unsigned char[frame.nbytes[0]];
       memset(pixels, 0x00, frame.nbytes[0]);

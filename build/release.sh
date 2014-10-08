@@ -22,12 +22,12 @@ extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
 cd build.release
-cmake -DCMAKE_BUILD_TYPE=Release -DUSE_OPENGL=False -DCMAKE_INSTALL_PREFIX=${install_path} ../
+cmake -DCMAKE_BUILD_TYPE=Release -DUSE_OPENGL=True -DCMAKE_INSTALL_PREFIX=${install_path} ../
 cmake --build . --target install --config Release
 
 cd ${install_path}/bin
 #./videocapture
 #./opengl_example
-#./easy_opengl_example
-./api_example
+./easy_opengl_example
+#./api_example
 

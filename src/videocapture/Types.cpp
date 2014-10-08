@@ -99,13 +99,19 @@ namespace ca {
     clear();
 
     if(fmt == CA_YUYV422) {
-
       width.push_back(w / 2);
       height.push_back(h);
       stride.push_back(w / 2);
       nbytes.push_back(w * h * 2);
       offset.push_back(0);
-
+      return 1;
+    }
+    else if (fmt == CA_UYVY422) {
+      width.push_back(w / 2);
+      height.push_back(h);
+      stride.push_back(w / 2);
+      nbytes.push_back(w * h * 2);
+      offset.push_back(0);
       return 1;
     }
     else if(fmt == CA_YUV420P) {
