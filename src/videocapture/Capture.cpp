@@ -100,4 +100,15 @@ namespace ca {
     return cap->findCapability(device, width, height, fmt);
   }
 
+  int Capture::findCapability(int device, int width, int height, int* fmts, int nfmts) {
+    int capid = -1;
+    for (int i = 0; i < nfmts; ++i) {
+      capid = cap->findCapability(device, width, height, fmts[i]);
+      if (capid > 0) {
+        return capid;
+      }
+    }
+    return -1;
+  }
+
 } // namespace ca

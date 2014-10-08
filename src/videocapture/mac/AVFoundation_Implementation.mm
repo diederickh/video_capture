@@ -37,12 +37,25 @@
     printf("Error: device already opened.\n");
     return -1;
   }
+
+  /* 
+
+     @todo Mac supports automatical conversion of pixel formats. For example,
+     the Logitech C920 cam, supports CA_YUYV422 but Mac can convert it to CA_UYVY422
+     using the output format object. At moment we only support capabilities that
+     are supported by the cam itself. 
+
+   */
+  if (settings.capability < 0) {
+    printf("Error: invalid capability: %d\n", settings.capability);
+    return -2;
+  }
   
   // Get the capture device
   AVCaptureDevice* cap_device = [self getCaptureDevice: settings.device];
   if(cap_device == nil) {
     printf("Error: cannot find the given capture device: %d\n", settings.device);
-    return -2;
+    return -3;
   }
 
   // Get the input device
@@ -50,7 +63,7 @@
   input = [AVCaptureDeviceInput deviceInputWithDevice: cap_device error:&err];
   if(input == nil) {
     printf("Error: cannot get the capture input device: %d\n", settings.device);
-    return -3;
+    return -4;
   }
 
   [input retain];
@@ -62,6 +75,9 @@
     return -4;
   }
 
+  // Is set to the settings.capability values. */
+  ca::Capability cap;
+
   [session beginConfiguration];
   {
 
@@ -69,7 +85,7 @@
     std::vector<ca::Capability> capabilities;
     [self getCapabilities: capabilities forDevice: settings.device];
     assert(capabilities.size() > 0);
-    ca::Capability cap = capabilities[settings.capability];
+    cap = capabilities[settings.capability];
 
     // Get the best matching session preset.
     NSString* const preset = [self widthHeightToCaptureSessionPreset: cap.width andHeight: cap.height];
@@ -78,13 +94,13 @@
     }
     else {
       printf("Error: cannot set the session preset.\n");
-      return -6;
+      return -5;
     }
 
     // Add the input
     if([session canAddInput: input] == NO) {
       printf("Error: cannot add the device input to the session manager.\n");
-      return -5;
+      return -6;
     }
     [session addInput:input];
 
@@ -126,7 +142,8 @@
 
     if(settings.format != CA_NONE) {
       assert(formats.size() > 0);
-      fmt_type = [self captureFormatToCvPixelFormat: formats[settings.format].format];
+      fmt_type = [self captureFormatToCvPixelFormat: cap.pixel_format]; 
+      
     }
     else {
       fmt_type = [self captureFormatToCvPixelFormat: formats[0].format];
@@ -273,11 +290,15 @@
   FourCharCode active_video_type = CMFormatDescriptionGetMediaSubType(format_desc_ref);
   int av_fmt = CMFormatDescriptionGetMediaSubType(format_desc_ref);
   if(av_fmt == kCVPixelFormatType_422YpCbCr8) {
-    printf("> kCVPixelFormatType_422YpCbCr8.\n");
+    printf("> kCVPixelFormatType_422YpCbCr8 (CA_UYVY422).\n");
   }
   else if(av_fmt == kCVPixelFormatType_422YpCbCr8_yuvs) {
-    printf("> kCVPixelFormatType_422YpCbCr8_yuvs.\n");
+    printf("> kCVPixelFormatType_422YpCbCr8_yuvs (CA_YUYV422).\n");
   }
+  else if (av_fmt == kCVPixelFormatType_32BGRA) {
+    printf("> kCVPixelFormatType_32BGRA.\n");
+  }
+
 #endif
 
 }

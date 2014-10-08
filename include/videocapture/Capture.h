@@ -53,6 +53,7 @@ namespace ca {
     int listCapabilities(int device);          
     int listOutputFormats();                   
     int findCapability(int device, int width, int height, int fmt);
+    int findCapability(int device, int width, int height, int* fmt, int nfmts);        /* Test several different capture formats. */
 
   public:
     Base* cap;                                                                                /* The capture implementation */

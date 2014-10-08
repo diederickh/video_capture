@@ -32,16 +32,25 @@ int main() {
 
   signal(SIGINT, sig_handler);
 
+  int width = 640;
+  int height = 480;
+
   Settings cfg;
   cfg.device = 0;
   cfg.capability = 0;
   cfg.format = 0;
-  
-  Capture cap(fcallback, NULL);
 
+  Capture cap(fcallback, NULL);
   cap.listDevices();
   cap.listOutputFormats();
-  cap.listCapabilities(0);
+  cap.listCapabilities(cfg.device);
+
+  int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
+  cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 3);
+  if (!cfg.capability) {
+    printf("Error: tried CA_YUYV422 and CA_UYVY formats; both didn't work.");
+    ::exit(EXIT_FAILURE);
+  }
 
   if(cap.open(cfg) < 0) {
     printf("Error: cannot open the device.\n");

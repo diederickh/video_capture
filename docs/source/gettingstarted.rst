@@ -78,7 +78,7 @@ Libraries to link with on Mac
 -----------------------------
 
  - CoreFoundation Framework
- - AVFoundatoin framework
+ - AVFoundation framework
  - Cocoa
  - CoreVideo
  - CoreMedia
