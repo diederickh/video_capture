@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
 
+# You should define the following variables when calling cmake:
+#
+#  - EXTERN_LIB_DIR      Path to the directory where we can find e.g. libpng, libz, etc..
+#  - EXTERN_INC_DIR      Path to the directory where we can find general headers e.g. png.h 
+#  - EXTERN_SRC_DIR      Path to the directory where we can find sources for dependencies (e.g. glad.c) 
+#  - TINYLIB_DIR         Path to tinylib base dir. 
+
 project(videocapture)
 
 include(ExternalProject)
@@ -19,8 +26,8 @@ set(videocapture_sources
 
 set(videocapture_include_dirs 
   ${id}
-  ${extern_include_dir}
-  ${bd}/shared/tinylib/src/
+  ${EXTERN_INC_DIR}
+  ${TINYLIB_DIR}/src/
   )
 
 if(APPLE)
@@ -74,7 +81,7 @@ if(UNIX AND NOT APPLE)
 
   if(USE_OPENGL)
     list(APPEND videocapture_libraries
-      ${extern_lib_dir}/libglfw3.a
+      ${EXTERN_LIB_DIR}/libglfw3.a
       GL
       X11
       Xxf86vm
@@ -85,7 +92,7 @@ if(UNIX AND NOT APPLE)
       )
 
     list(APPEND videocapture_sources
-      ${extern_source_dir}/GLXW/glxw.c
+      ${EXTERN_SRC_DIR}/GLXW/glxw.c
       )
     
   endif()
@@ -112,11 +119,11 @@ if(WIN32)
 
   if(USE_OPENGL)
     list(APPEND videocapture_sources
-      ${extern_source_dir}/GLXW/glxw.c
+      ${EXTERN_SRC_DIR}/GLXW/glxw.c
       )
 
     list(APPEND videocapture_libraries
-      ${extern_lib_dir}/glfw3.lib
+      ${EXTERN_LIB_DIR}/glfw3.lib
       Opengl32.lib
       ws2_32.lib
       psapi.lib

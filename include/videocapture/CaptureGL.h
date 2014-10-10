@@ -15,24 +15,12 @@
   include the <videocapture/CaptureGL.h>. 
 
 
-  Extensions
-  -----------
-  
-  VIDEO_CATURE_USE_APPLE_RGB_422
-          When you add a define like `#define VIDEO_CAPTURE_USE_APPLE_RGB_422` we 
-          will make sure of the APPLE rgb_422 extension which gives slightly better
-          visual quality. 
-
-          e.g.
-          #define VIDEO_CAPTURE_USE_APPLE_RGB_422
-  
   Usage
   -----
   
   ````c++
 
       // include here your GL headers (e.g. using GLFW)
-      #define VIDEO_CAPTURE_USE_APPLE_RGB_422              // only use this if you want to use the rgb_422 extension: https://www.opengl.org/registry/specs/APPLE/rgb_422.txt, make sure it's loaded 
       #define VIDEO_CAPTURE_IMPLEMENTATION
       #include <videocapture/CaptureGL.h>  
 
@@ -57,11 +45,22 @@
     
       capture.stop();
       capture.close(); 
+      
+     // ...
+
   ````      
 
 */
+
 #ifndef VIDEO_CAPTURE_GL_H
 #define VIDEO_CAPTURE_GL_H
+
+#define CA_RENDERING_TYPE_NONE 0
+#define CA_RENDERING_TYPE_UYVY422_APPLE 1       /* Uses the GL_RGB_422_APPLE extension. */
+#define CA_RENDERING_TYPE_YUYV422_APPLE 2       /* Uses the GL_RGB_422_APPLE extension. */
+#define CA_RENDERING_TYPE_UYVY422_GENERIC 3     /* Cross platform UYVY422. Does not use extensions. */
+#define CA_RENDERING_TYPE_YUYV422_GENERIC 4     /* Cross platform YUVY422. Does not use extensions. */
+#define CA_RENDERING_TYPE_YUV420P_GENERIC 5     /* Cross platform YUV420P rendering. Does not use extensions. */
 
 #include <videocapture/Types.h>
 #include <videocapture/Capture.h>
@@ -69,7 +68,6 @@
 static const char* CAPTURE_GL_VS = ""
   "#version 330\n"
   "uniform vec4 u_pos; " 
-  //  "uniform int u_tc_index;" /* where to start fetching the texcoords, to flip the input */
   "uniform float u_texcoords[8]; "
   ""
   "const vec2 pos[4] = vec2[4]("
@@ -78,50 +76,6 @@ static const char* CAPTURE_GL_VS = ""
   "  vec2( 1.0,  1.0), "
   "  vec2( 1.0, 0.0)  "
   ");"
-
-  /* flip horizontal */
-  " const vec2[] tex = vec2[4]( "
-  "   vec2(1.0, 0.0), "
-  "   vec2(1.0, 1.0), "
-  "   vec2(0.0, 0.0), "
-  "   vec2(0.0, 1.0) "
-  ");"
-
-
-#if 0
-  ""
-  /* normal */
-  " const vec2[] tex_normal = vec2[4]( "
-  "   vec2(0.0, 0.0), "
-  "   vec2(0.0, 1.0), "
-  "   vec2(1.0, 0.0), "
-  "   vec2(1.0, 1.0) "
-  ");"
-
-  /* flip vertical */
-  " const vec2[] tex_vert = vec2[4]( "
-  "   vec2(0.0, 1.0), "
-  "   vec2(0.0, 0.0), "
-  "   vec2(1.0, 1.0), "
-  "   vec2(1.0, 0.0) "
-  ");"
-
-  /* flip horizontal */
-  " const vec2[] tex_hori = vec2[4]( "
-  "   vec2(1.0, 0.0), "
-  "   vec2(1.0, 1.0), "
-  "   vec2(0.0, 0.0), "
-  "   vec2(0.0, 1.0) "
-  ");"
-
-  /* flip vertical + horizontal */
-  " const vec2[] tex_verthori = vec2[4]( "
-  "   vec2(1.0, 1.0), "
-  "   vec2(1.0, 0.0), "
-  "   vec2(0.0, 1.0), "
-  "   vec2(0.0, 0.0) "
-  ");"
-#endif
   ""
   "out vec2 v_texcoord; "
   ""
@@ -138,20 +92,12 @@ static const char* CAPTURE_GL_VS = ""
   "  gl_Position = vec4(offset.x + scale.x, "
   "                     offset.y + scale.y, "
   "                     0.0, 1.0);"
-
-#if 0
   " v_texcoord = vec2(u_texcoords[gl_VertexID * 2], u_texcoords[gl_VertexID * 2 + 1]);"
-#else 
-  " v_texcoord = tex[gl_VertexID];"
-#endif
   "}"
   "";
 
-// Decode YUV422 data (Y0 Cb Y1 Cr)
-#if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422)
-
-/* Uses the APPLE RGB 422 extension */
-static const char* CAPTURE_GL_YUYV422_FS = ""
+/* Uses the APPLE RGB 422 extension: note that this is identical as `CAPTURE_GL_YUVY422_APPLE_FS`, we use GL_UNSIGNED_SHORT_8_8_APPLE or YUYV and GL_UNSIGNED_SHORT_8_8_REV for UYVY, see updateYUYV422(). */ 
+static const char* CAPTURE_GL_UYVY422_APPLE_FS = ""
   "#version 330\n"
   "uniform sampler2D u_tex;"
   "layout( location = 0 ) out vec4 outcol; "
@@ -171,53 +117,35 @@ static const char* CAPTURE_GL_YUYV422_FS = ""
   "  outcol.g = dot(yuv, G_cf);"
   "  outcol.b = dot(yuv, B_cf);"
   "  outcol.a = 1.0;"
-  //  "  outcol.rg = v_texcoord;"
-  //  "  outcol = vec4(0.0, 0.0, 0.2, 1.0);"
   "}"
   "";
 
-#else 
-
-/* Custom YUYV422, or YUV 4:2:2 (same thing, different names) shader */
-static const char* CAPTURE_GL_YUYV422_FS = ""
+/* Uses the APPLE RGB 422 extension, for YUYV422: note that this is identical as `CAPTURE_GL_UYVY422_APPLE_FS`, we use GL_UNSIGNED_SHORT_8_8_APPLE or YUYV and GL_UNSIGNED_SHORT_8_8_REV for UYVY, see updateYUYV422(). */
+static const char* CAPTURE_GL_YUYV422_APPLE_FS = ""
   "#version 330\n"
-  ""
   "uniform sampler2D u_tex;"
-  "layout( location = 0 ) out vec4 fragcolor; "
-  "in vec2 v_texcoord;"
-  ""
+  "layout( location = 0 ) out vec4 outcol; "
+
   "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
   "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
   "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
   "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+ 
+  "in vec2 v_texcoord;"
   ""
   "void main() {"
-  ""
-  "  int width = textureSize(u_tex, 0).x * 2;"
-  "  float tex_x = v_texcoord.x; "
-  "  int pixel = int(floor(width * tex_x)) % 2; "
-  "  vec4 tc =  texture( u_tex, v_texcoord ).rgba;"
-  ""
-  "  float cr = tc.a; "
-  "  float y2 = tc.b; "
-  "  float cb = tc.g; "
-  "  float y1 = tc.r; "
-  ""
-  "  float y = (pixel == 1) ? y2 : y1; "
-  "  vec3 yuv = vec3(y, cb, cr);"
+  "  vec3 tc =  texture( u_tex, v_texcoord ).rgb;"
+  "  vec3 yuv = vec3(tc.g, tc.b, tc.r);"
   "  yuv += offset;"
-  ""
-  "  fragcolor.r = dot(yuv, R_cf);"
-  "  fragcolor.g = dot(yuv, G_cf);"
-  "  fragcolor.b = dot(yuv, B_cf);"
-  "  fragcolor.a = 1.0;"
+  "  outcol.r = dot(yuv, R_cf);"
+  "  outcol.g = dot(yuv, G_cf);"
+  "  outcol.b = dot(yuv, B_cf);"
+  "  outcol.a = 1.0;"
   "}"
   "";
 
-#endif
-
-/* UYVY422 */
-static const char* CAPTURE_GL_UYVY422_FS = ""
+/* Generic UYVY422 */
+static const char* CAPTURE_GL_UYVY422_GENERIC_FS = ""
   "#version 330\n"
   ""
   "uniform sampler2D u_tex;"
@@ -252,8 +180,44 @@ static const char* CAPTURE_GL_UYVY422_FS = ""
   "}"
   "";
 
+/* Generic YUYV422, or YUV 4:2:2 (same thing, different names) shader */
+static const char* CAPTURE_GL_YUYV422_GENERIC_FS = ""
+  "#version 330\n"
+  ""
+  "uniform sampler2D u_tex;"
+  "layout( location = 0 ) out vec4 fragcolor; "
+  "in vec2 v_texcoord;"
+  ""
+  "const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);"
+  "const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);"
+  "const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);"
+  "const vec3 offset = vec3(-0.0625, -0.5, -0.5);"
+  ""
+  "void main() {"
+  ""
+  "  int width = textureSize(u_tex, 0).x * 2;"
+  "  float tex_x = v_texcoord.x; "
+  "  int pixel = int(floor(width * tex_x)) % 2; "
+  "  vec4 tc =  texture( u_tex, v_texcoord ).rgba;"
+  ""
+  "  float cr = tc.a; "
+  "  float y2 = tc.b; "
+  "  float cb = tc.g; "
+  "  float y1 = tc.r; "
+  ""
+  "  float y = (pixel == 1) ? y2 : y1; "
+  "  vec3 yuv = vec3(y, cb, cr);"
+  "  yuv += offset;"
+  ""
+  "  fragcolor.r = dot(yuv, R_cf);"
+  "  fragcolor.g = dot(yuv, G_cf);"
+  "  fragcolor.b = dot(yuv, B_cf);"
+  "  fragcolor.a = 1.0;"
+  "}"
+  "";
+
 // Decode YUV420P (3 planes)
-static const char* CAPTURE_GL_YUV420P_FS = ""
+static const char* CAPTURE_GL_YUV420P_GENERIC_FS = ""
   "#version 330\n"
   "uniform sampler2D y_tex;"
   "uniform sampler2D u_tex;"
@@ -310,6 +274,9 @@ namespace ca {
     int listOutputFormats();                                                           /* Wrapper around Capture::listOutputFormats(). */
     int findCapability(int device, int width, int height, int fmt);                    /* Wrapper around Capture::findCapability() */
 
+    void setRenderingType(int rtype);                                                  /* Set one of the rendering types, is used to determine which shader to use. */
+    const char* getFragmentShaderSource();                                             /* Returns the fragment shader to use, based on the current rendering type. */
+
   private:
     int setupGraphics();                                                               /* Creates the opengl objects */
     int setupShaders();                                                                /* Creates shaders for the pixel format */
@@ -319,6 +286,7 @@ namespace ca {
 
   public:
     int fmt;                                                                           /* The pixel format we use. Used to setup graphics state */
+    int rendering_type;  /* what rendering type to use; e.g. use APPLE extension, or a generic YUV422 shader. */ 
     int width;                                                                         /* The width of the frames we capture */
     int height;                                                                        /* The height of the frames we capture */
     float inv_win_w;                                                                   /* Inverse window/viewport width, used to calculate the correct position/offset values for the vertex shader . */
@@ -341,21 +309,28 @@ namespace ca {
     GLuint tex2;                                                                       /* Texture that will be filled with the pixel data from the webcam (e.g. the U plane when using YUV420P). */
     unsigned char* pixels;                                                             /* When we use the YUYV422/YUV420 this will hold all the data */
     bool needs_update;                                                                 /* Is set to true when we receive a new frame */
-
   };
+
+  inline void CaptureGL::setRenderingType(int rtype) {
+    rendering_type = rtype;
+  }
 
   // Update the YUYV422 Pixels
   inline void CaptureGL::updateYUYV422() {
+    
+    glBindTexture(GL_TEXTURE_2D, tex0);
 
-    glBindTexture(GL_TEXTURE_2D, u_tex0);
-
-#  if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422)
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, (uint16_t*)pixels);
-#  else
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
-#  endif
-
+#if defined(GL_RGB_422_APPLE)
+    if (rendering_type == CA_RENDERING_TYPE_YUYV422_APPLE) {
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, (uint16_t*)pixels);
+    }
+    else if (rendering_type == CA_RENDERING_TYPE_UYVY422_APPLE) {
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, (uint16_t*)pixels);
+    }
+#else
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+#endif
   }
 
   // Update the YUV420P Pixels
@@ -433,6 +408,7 @@ namespace ca {
   CaptureGL::CaptureGL()
     :cap(capturegl_on_frame, this)
     ,fmt(CA_NONE)
+    ,rendering_type(CA_RENDERING_TYPE_NONE)
     ,width(0)
     ,height(0)
     ,inv_win_w(0)
@@ -497,6 +473,7 @@ namespace ca {
         break;
       }
     }
+
     if(settings.capability < 0) {
       printf("Error: cannot find a usable capability.\n");
       return -1;
@@ -582,6 +559,27 @@ namespace ca {
 
   int CaptureGL::setupGraphics() {
 
+    /* Determine the best rendering type. */
+#if defined(GL_RGB_422_APPLE)
+    if (fmt == CA_UYVY422) {
+      setRenderingType(CA_RENDERING_TYPE_UYVY422_APPLE);
+    }
+    else if (fmt == CA_YUYV422) {
+      setRenderingType(CA_RENDERING_TYPE_YUYV422_APPLE);
+    }
+    else {
+      printf("Unhandled pixel format.\n");
+      exit(1);
+    }
+#else 
+    if (fmt == CA_UYVY422) {
+      setRenderingType(CA_RENDERING_TYPE_UYVY422_GENERIC);
+    }
+    else if (fmt == CA_YUYV422) {
+      setRenderingType(CA_RENDERING_TYPE_YUYV422_GENERIC);
+    }
+#endif
+
     glGenVertexArrays(1, &vao);    
         
     if(setupShaders() < 0) {
@@ -598,24 +596,38 @@ namespace ca {
     return 1;
   }
 
+  const char* CaptureGL::getFragmentShaderSource() {
+    switch (rendering_type) {
+      case CA_RENDERING_TYPE_YUYV422_GENERIC: {
+        return CAPTURE_GL_YUYV422_GENERIC_FS;
+      }
+      case CA_RENDERING_TYPE_UYVY422_GENERIC: {
+        return CAPTURE_GL_UYVY422_GENERIC_FS;
+      }
+      case CA_RENDERING_TYPE_YUYV422_APPLE: {
+        return CAPTURE_GL_YUYV422_APPLE_FS;
+      }
+      case CA_RENDERING_TYPE_UYVY422_APPLE: {
+        return CAPTURE_GL_UYVY422_APPLE_FS;
+      }
+      case CA_RENDERING_TYPE_NONE: {
+        printf("Error: cannot find rendering type and therefore no shader source.\n");
+        return NULL;
+      }
+    }
+    return NULL;
+  }
+
   int CaptureGL::setupShaders() {
 
-    vert = capturegl_create_shader(GL_VERTEX_SHADER, CAPTURE_GL_VS);
-
-    // select the correct fragment shader
-    if (fmt == CA_YUV420P) {
-      frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUV420P_FS);
-    }
-    else if (fmt == CA_YUYV422) {
-      frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_YUYV422_FS);
-    }
-    else if (fmt == CA_UYVY422) {
-      frag = capturegl_create_shader(GL_FRAGMENT_SHADER, CAPTURE_GL_UYVY422_FS);
-    }
-    else {
-      printf("Error: no shader yet for the current pixel format. \n");
+    const char* fragment_source = getFragmentShaderSource();
+    if (fragment_source == NULL) {
+      printf("Error: cannot retrieve a fragment shahder source for the current rendering type.\n");
       return -1;
     }
+
+    vert = capturegl_create_shader(GL_VERTEX_SHADER, CAPTURE_GL_VS);
+    frag = capturegl_create_shader(GL_FRAGMENT_SHADER, fragment_source);
 
     prog = glCreateProgram();
     glAttachShader(prog, vert);
@@ -689,8 +701,8 @@ namespace ca {
       glGenTextures(1, &tex0);
       glBindTexture(GL_TEXTURE_2D, tex0);
 
-#if defined(VIDEO_CAPTURE_USE_APPLE_RGB_422) 
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, pixels);
+#if defined(GL_RGB_422_APPLE)
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, pixels);
 #else
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
 #endif

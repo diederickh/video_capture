@@ -21,14 +21,27 @@ fi
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
+if [ ! -d ${d}/sources ] ; then
+    if [ "{is_linux}" = "y" ] || [ "${is_mac}" = "y" ] ; then
+        ./build_unix_dependencies.sh
+    fi
+    if [ "${is_win}" = "y" ] ; then 
+        ./build_win_dependencies.sh
+    fi
+fi
+
 cd build.release
 
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DUSE_OPENGL=True \
-    -DEXTERN_LIB_DIR=${extern_path}\
+    -DEXTERN_LIB_DIR=${extern_path}/lib \
+    -DEXTERN_INC_DIR=${extern_path}/include \
+    -DEXTERN_SRC_DIR=${extern_path}/src \
+    -DTINYLIB_DIR=${d}/sources/tinylib/ \
     -DCMAKE_INSTALL_PREFIX=${install_path} \
     ../
+
 cmake --build . --target install --config Release
 
 cd ${install_path}/bin
