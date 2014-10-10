@@ -30,6 +30,10 @@ set(videocapture_include_dirs
   ${TINYLIB_DIR}/src/
   )
 
+set(gl_sources 
+  ${EXTERN_SRC_DIR}/glad.c
+  )
+
 if(APPLE)
 
   list(APPEND videocapture_sources
@@ -82,17 +86,18 @@ if(UNIX AND NOT APPLE)
   if(USE_OPENGL)
     list(APPEND videocapture_libraries
       ${EXTERN_LIB_DIR}/libglfw3.a
+      dl
+      rt
       GL
       X11
       Xxf86vm
       Xrandr
-      pthread
       dl
       Xi
-      )
-
-    list(APPEND videocapture_sources
-      ${EXTERN_SRC_DIR}/GLXW/glxw.c
+      Xcursor
+      Xinerama
+      udev  
+      pthread
       )
     
   endif()
@@ -146,7 +151,7 @@ if(USE_OPENGL)
   # install(TARGETS opengl_example RUNTIME DESTINATION bin)
 
   # Using the simple wrapper
-  add_executable(easy_opengl_example ${sd}/easy_opengl_example.cpp) 
+  add_executable(easy_opengl_example ${sd}/easy_opengl_example.cpp ${gl_sources}) 
   target_link_libraries(easy_opengl_example ${videocapture_libraries} videocapture)
   add_dependencies(easy_opengl_example videocapture)
   install(TARGETS easy_opengl_example RUNTIME DESTINATION bin)

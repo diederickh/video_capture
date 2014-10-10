@@ -62,6 +62,24 @@
 #define CA_RENDERING_TYPE_YUYV422_GENERIC 4     /* Cross platform YUVY422. Does not use extensions. */
 #define CA_RENDERING_TYPE_YUV420P_GENERIC 5     /* Cross platform YUV420P rendering. Does not use extensions. */
 
+/* Set GL_RGB422_APPLE extension info */
+#ifndef GL_RGB_422_APPLE
+#  define GL_RGB_422_APPLE 0x8A1F
+#endif
+
+#ifndef GL_UNSIGNED_SHORT_8_8_APPLE
+#  define GL_UNSIGNED_SHORT_8_8_APPLE 0x85BA
+#endif
+
+#ifndef GL_UNSIGNED_SHORT_8_8_REV_APPLE
+#  define GL_UNSIGNED_SHORT_8_8_REV_APPLE 0x85BB
+#endif
+
+#ifndef GL_RGB_RAW_422_APPLE
+#  define GL_RGB_RAW_422_APPLE 0x8A51
+#endif
+
+
 #include <videocapture/Types.h>
 #include <videocapture/Capture.h>
 
@@ -213,6 +231,7 @@ static const char* CAPTURE_GL_YUYV422_GENERIC_FS = ""
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
   "  fragcolor.a = 1.0;"
+  //  "  fragcolor.r = 0.0;" 
   "}"
   "";
 
@@ -313,6 +332,7 @@ namespace ca {
 
   inline void CaptureGL::setRenderingType(int rtype) {
     rendering_type = rtype;
+    // printf("Rendering type: %d\n", rtype);
   }
 
   // Update the YUYV422 Pixels
@@ -320,17 +340,21 @@ namespace ca {
     
     glBindTexture(GL_TEXTURE_2D, tex0);
 
-#if defined(GL_RGB_422_APPLE)
     if (rendering_type == CA_RENDERING_TYPE_YUYV422_APPLE) {
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, (uint16_t*)pixels);
     }
     else if (rendering_type == CA_RENDERING_TYPE_UYVY422_APPLE) {
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, (uint16_t*)pixels);
     }
-#else
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
-#endif
+    else if (rendering_type == CA_RENDERING_TYPE_YUYV422_GENERIC
+             || rendering_type == CA_RENDERING_TYPE_UYVY422_GENERIC)
+    {
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[0], frame.height[0], GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+    }
+    else {
+      printf("Unhandled pixel format in updateYUYV.\n");
+    }
   }
 
   // Update the YUV420P Pixels
@@ -375,6 +399,7 @@ namespace ca {
 
   static int print_shader_compile_info(GLuint shader); 
   static int print_program_link_info(GLuint prog);
+  static int capturegl_is_extension_supported(std::string name);
 
   /* -------------------------------------- */
 
@@ -560,25 +585,31 @@ namespace ca {
   int CaptureGL::setupGraphics() {
 
     /* Determine the best rendering type. */
-#if defined(GL_RGB_422_APPLE)
-    if (fmt == CA_UYVY422) {
-      setRenderingType(CA_RENDERING_TYPE_UYVY422_APPLE);
-    }
-    else if (fmt == CA_YUYV422) {
-      setRenderingType(CA_RENDERING_TYPE_YUYV422_APPLE);
+    if (0 == capturegl_is_extension_supported("GL_RGB_422_APPLE")) {
+      if (fmt == CA_UYVY422) {
+        setRenderingType(CA_RENDERING_TYPE_UYVY422_APPLE);
+      }
+      else if (fmt == CA_YUYV422) {
+        setRenderingType(CA_RENDERING_TYPE_YUYV422_APPLE);
+      }
+      else {
+        printf("Unhandled pixel format.\n");
+        exit(1);
+      }
     }
     else {
-      printf("Unhandled pixel format.\n");
-      exit(1);
+      /* GL_RGB422 is defined, but not supported. */
+      if (fmt == CA_UYVY422) {
+        setRenderingType(CA_RENDERING_TYPE_UYVY422_GENERIC);
+      }
+      else if (fmt == CA_YUYV422) {
+        setRenderingType(CA_RENDERING_TYPE_YUYV422_GENERIC);
+      }
+      else {
+        printf("Unhandled pixel format.\n");
+        exit(1);
+      }
     }
-#else 
-    if (fmt == CA_UYVY422) {
-      setRenderingType(CA_RENDERING_TYPE_UYVY422_GENERIC);
-    }
-    else if (fmt == CA_YUYV422) {
-      setRenderingType(CA_RENDERING_TYPE_YUYV422_GENERIC);
-    }
-#endif
 
     glGenVertexArrays(1, &vao);    
         
@@ -701,11 +732,21 @@ namespace ca {
       glGenTextures(1, &tex0);
       glBindTexture(GL_TEXTURE_2D, tex0);
 
-#if defined(GL_RGB_422_APPLE)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, pixels);
-#else
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
-#endif
+      /* Even when GL_RGB422_APPLE is found the extension may not be supported. */
+      if (rendering_type == CA_RENDERING_TYPE_YUYV422_GENERIC
+          || rendering_type == CA_RENDERING_TYPE_UYVY422_GENERIC)
+      {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame.width[0], frame.height[0], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+      }
+      else if (rendering_type == CA_RENDERING_TYPE_YUYV422_APPLE
+               || rendering_type == CA_RENDERING_TYPE_UYVY422_APPLE)
+      {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, pixels);
+      }
+      else {
+        printf("Error: unhandled pixel format, cannot create a texture.\n");
+        return -1;
+      }
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -857,6 +898,69 @@ namespace ca {
     error = NULL;
     return -1;
   }
+
+  /* Returns 0 is extension is supported otherwise -1. */
+  static int capturegl_is_extension_supported(std::string name) {
+
+    GLint n=0, i; 
+    const char* extension = NULL;
+
+    glGetIntegerv(GL_NUM_EXTENSIONS, &n); 
+    for (i=0; i<n; i++) { 
+      extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
+      if (!strcmp(name.c_str(), extension)) {
+        return 0;
+      }
+    }
+    return -1;
+
+    #if 0
+
+    /* GL 2 solution to check extensions!! */
+
+    const char* extension = name.c_str();
+    const GLubyte *extensions = NULL;
+    const GLubyte *start;
+    GLubyte *where, *terminator;
+
+    /* Extension names should not have spaces. */
+    where = (GLubyte *) strchr(extension, ' ');
+    if (where || *extension == '\0') {
+      return -1;
+    }
+
+    extensions = glGetStringi(GL_EXTENSIONS, 0);
+    if (extensions == NULL) {
+      printf("Error: cannot query extensions.\n");
+      return -1;
+    }
+
+    /* 
+       It takes a bit of care to be fool-proof about parsing the
+       OpenGL extensions string. Don't be fooled by sub-strings,
+       etc. 
+    */
+    start = extensions;
+
+    for (;;) {
+      where = (GLubyte *) strstr((const char *) start, extension);
+      if (!where) {
+        break;
+      }
+
+      terminator = where + strlen(extension);
+      if (where == start || *(where - 1) == ' ') {
+        if (*terminator == ' ' || *terminator == '\0') {
+          return 0;
+        }
+      }
+      start = terminator;
+    }
+    #endif
+    return -1;
+
+  }
+
 } // namespace ca 
 
 #endif // #if defined(VIDEO_CAPTURE_IMPLEMENTATION)

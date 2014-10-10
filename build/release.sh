@@ -16,13 +16,15 @@ elif [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
 elif [ "$(expr substr $(uname -s) 1 10)" = "MINGW32_NT" ]; then
     is_win=y
     triplet="win-vs2012-x86_64"
+else
+    echo "not valid triplet found"
 fi
 
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
 if [ ! -d ${d}/sources ] ; then
-    if [ "{is_linux}" = "y" ] || [ "${is_mac}" = "y" ] ; then
+    if [ "${is_linux}" = "y" ] || [ "${is_mac}" = "y" ] ; then
         ./build_unix_dependencies.sh
     fi
     if [ "${is_win}" = "y" ] ; then 

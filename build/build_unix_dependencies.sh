@@ -1010,7 +1010,11 @@ if [ "${build_glad}" = "y" ] ; then
             mkdir ${bd}/src 
         fi
         cd ${sd}/glad
-        python main.py --generator=c --out-path=gl --extensions GL_ARB_timer_query,GL_APPLE_rgb_422
+        if [ -f /usr/bin/python2 ] ; then
+            python2 main.py --generator=c --out-path=gl --extensions GL_ARB_timer_query,GL_APPLE_rgb_422
+        else
+            python main.py --generator=c --out-path=gl --extensions GL_ARB_timer_query,GL_APPLE_rgb_422
+        fi
         cp -r ${sd}/glad/gl/include/glad ${bd}/include/
         cp -r ${sd}/glad/gl/include/KHR ${bd}/include/
         cp ${sd}/glad/gl/src/glad.c ${bd}/src/
