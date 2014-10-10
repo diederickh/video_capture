@@ -26,15 +26,18 @@
 # ----------------------------------------------------------------------- #
 
 build_libuv=n
-build_yasm=y
-build_x264=y            # needs yasm
-build_videogenerator=y
-build_lame=y
-build_openssl=y
-build_portaudio=y
-build_libyuv=y
-build_videocapture=y
-build_rapidxml=y
+build_yasm=n
+build_x264=n            # needs yasm, perl
+build_videogenerator=n
+build_lame=n
+build_openssl=n
+build_portaudio=n
+build_libyuv=n
+build_videocapture=n
+build_rapidxml=n
+build_glad=y
+build_tinylib=y
+build_glfw=y
 
 # ----------------------------------------------------------------------- #
 #                E N V I R O N M E N T  V A R I A B L E S 
@@ -59,29 +62,33 @@ cd ~
 homedir=${PWD}
 cd ${d}
 
-# Make sure we have perl installed.
-if [ ! -d ${perl_path} ] ; then
-    echo "Please install ActiveState Perl in ${sd}/tools/perl"
-    exit
-fi
+if [ "${build_x264}" = "y" ] || [ "${build_openssl}" == "y" ] ; then 
 
-# Make sure we have nasm.
-if [ ! -d ${nasm_path} ] ; then
-    echo "Please install nasm in ${sd}/tools/nasm"
-    exit
-fi
+    # Make sure we have perl installed.
+    if [ ! -d ${perl_path} ] ; then
+        echo "Please install ActiveState Perl in ${sd}/tools/perl"
+        exit
+    fi
 
-# Make sure we have cygwin
-if [ ! -d ${cygw_path} ] ; then
-    echo "Please install cygwin into ${sd}/tools/cygwin"
-    exit
-fi
+    # Make sure we have nasm.
+    if [ ! -d ${nasm_path} ] ; then
+        echo "Please install nasm in ${sd}/tools/nasm"
+        exit
+    fi
+    
+    # Make sure we have cygwin
+    if [ ! -d ${cygw_path} ] ; then
+        echo "Please install cygwin into ${sd}/tools/cygwin"
+        exit
+    fi
+fi 
 
 export PATH=${cygw_path}/bin/:${perl_path}:${nasm_path}:${PATH}:${bd}/bin/:${sd}/gyp/
 
 # ----------------------------------------------------------------------- #
 #                          F U N C T I O N S  
 # ----------------------------------------------------------------------- #
+
 # download [dirname] [filename] [url]
 function download() {
     name=${1}
@@ -259,6 +266,31 @@ if [ "${build_videocapture}" = "y" ] ; then
     fi
 fi
 
+# Download GLAD for GL
+if [ "${build_glad}" = "y" ] ; then
+    if [ ! -d ${sd}/glad ] ; then 
+        cd ${sd}
+        git clone --depth 1 --branch master https://github.com/Dav1dde/glad.git glad
+    fi
+fi
+
+# Download the tinylib 
+if [ "${build_tinylib}" = "y" ] ; then
+    if [ ! -d ${sd}/tinylib ] ; then 
+        mkdir ${sd}/tinylib
+        cd ${sd}/tinylib
+        git clone https://github.com/roxlu/tinylib.git .
+    fi
+fi
+
+# Download GLFW for GL
+if [ "${build_glfw}" = "y" ] ; then
+    if [ ! -d ${sd}/glfw ] ; then 
+        cd ${sd}
+        git clone --depth 1 --branch master https://github.com/glfw/glfw.git glfw
+    fi
+fi
+
 # ----------------------------------------------------------------------- #
 #                C O M P I L E   D E P E N D E N C I E S 
 # ----------------------------------------------------------------------- #
@@ -401,5 +433,45 @@ if [ "${build_rapidxml}" = "y" ] ; then
         cp rapidxml_print.hpp ${bd}/include/
         cp rapidxml_utils.hpp ${bd}/include/
         cp rapidxml.hpp ${bd}/include/
+    fi
+fi
+
+# Copy the GLAD sources + generate the C extension
+if [ "${build_glad}" = "y" ] ; then 
+    if [ ! -f ${bd}/src/glad.c ] ; then
+        if [ ! -d ${bd}/src ] ; then
+            mkdir ${bd}/src 
+        fi
+        cd ${sd}/glad
+        python main.py --generator=c --out-path=gl --extensions GL_ARB_timer_query,GL_APPLE_rgb_422
+
+        cp -r ${sd}/glad/gl/include/glad ${bd}/include/
+        cp -r ${sd}/glad/gl/include/KHR ${bd}/include/
+        cp ${sd}/glad/gl/src/glad.c ${bd}/src/
+    fi
+fi
+
+# Compile glfw
+if [ "${build_glfw}" = "y" ] ; then
+    if [ ! -f ${bd}/lib/libglfw3.a ] ; then
+        cd ${sd}/glfw
+        if [ -d build ] ; then 
+            rm -r build
+        fi
+        if [ ! -d build ] ; then
+            mkdir build
+        fi
+
+        cfcopy=${CFLAGS}
+        ldcopy=${LDFLAGS}
+        export CFLAGS=""
+        export LDFLAGS=""
+
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX=${bd} ..
+        cmake --build . --target install
+
+        export CFLAGS=${cfcopy}
+        export LDFLAGS=${ldcopy}
     fi
 fi

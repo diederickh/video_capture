@@ -231,7 +231,6 @@ static const char* CAPTURE_GL_YUYV422_GENERIC_FS = ""
   "  fragcolor.g = dot(yuv, G_cf);"
   "  fragcolor.b = dot(yuv, B_cf);"
   "  fragcolor.a = 1.0;"
-  //  "  fragcolor.r = 0.0;" 
   "}"
   "";
 
@@ -593,7 +592,7 @@ namespace ca {
         setRenderingType(CA_RENDERING_TYPE_YUYV422_APPLE);
       }
       else {
-        printf("Unhandled pixel format.\n");
+        printf("Unhandled pixel format in setupGraphics().\n");
         exit(1);
       }
     }
@@ -605,8 +604,11 @@ namespace ca {
       else if (fmt == CA_YUYV422) {
         setRenderingType(CA_RENDERING_TYPE_YUYV422_GENERIC);
       }
+      else if (fmt == CA_YUV420P) {
+        setRenderingType(CA_RENDERING_TYPE_YUV420P_GENERIC);
+      }
       else {
-        printf("Unhandled pixel format.\n");
+        printf("Unhandled pixel format in setupGraphics(), (2).\n");
         exit(1);
       }
     }
@@ -640,6 +642,9 @@ namespace ca {
       }
       case CA_RENDERING_TYPE_UYVY422_APPLE: {
         return CAPTURE_GL_UYVY422_APPLE_FS;
+      }
+      case CA_RENDERING_TYPE_YUV420P_GENERIC: {
+        return CAPTURE_GL_YUV420P_GENERIC_FS;
       }
       case CA_RENDERING_TYPE_NONE: {
         printf("Error: cannot find rendering type and therefore no shader source.\n");
