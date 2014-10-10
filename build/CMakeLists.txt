@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(videocapture)
 
-include(${CMAKE_CURRENT_LIST_DIR}/Triplet.cmake)
 include(ExternalProject)
 
 option(USE_OPENGL "Create OpenGL examples" ON)
@@ -10,22 +9,6 @@ option(USE_OPENGL "Create OpenGL examples" ON)
 set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
 set(id ${bd}/include/)
-
-# Download opengl dependency
-if(NOT EXISTS ${bd}/extern)
-  message(STATUS "Downloading opengl dependencies")
-  set(extern_url "http://www.github.com/roxlu/binaries/blob/master/video_capture/extern_video_capture_0.0.0.1.tar.gz?raw=true")
-  file(DOWNLOAD "${extern_url}" ${bd}/extern/extern.tar.gz SHOW_PROGRESS TIMEOUT 30 STATUS status)
-  execute_process(COMMAND
-     ${CMAKE_COMMAND} -E tar xzf ${bd}/extern/extern.tar.gz
-     WORKING_DIRECTORY ${bd}/
-     )
-endif()
-
-# Download tinylib dependency
-if(NOT EXISTS ${bd}/shared/tinylib/src/tinylib.h)
-  file(DOWNLOAD https://raw.github.com/roxlu/tinylib/master/src/tinylib.h ${bd}/shared/tinylib/src/tinylib.h SHOW_PROGRESS TIMEOUT 30)
-endif()
 
 set(videocapture_sources 
   ${sd}/videocapture/Base.cpp
@@ -67,7 +50,7 @@ if(APPLE)
     find_library(fr_iokit IOKit)
 
     list(APPEND videocapture_libraries
-      ${extern_lib_dir}/libglfw3.a
+      ${EXTERN_LIB_DIR}/libglfw3.a
       ${fr_opengl}
       ${fr_iokit}
       )

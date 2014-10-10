@@ -22,7 +22,13 @@ extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
 cd build.release
-cmake -DCMAKE_BUILD_TYPE=Release -DUSE_OPENGL=True -DCMAKE_INSTALL_PREFIX=${install_path} ../
+
+cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DUSE_OPENGL=True \
+    -DEXTERN_LIB_DIR=${extern_path}\
+    -DCMAKE_INSTALL_PREFIX=${install_path} \
+    ../
 cmake --build . --target install --config Release
 
 cd ${install_path}/bin
