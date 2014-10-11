@@ -157,7 +157,7 @@ endif()
 
 add_executable(api_example ${sd}/api_example.cpp)
 target_link_libraries(api_example ${videocapture_libraries} videocapture)
-add_dependencies(api_example video_capture)
+#add_dependencies(api_example video_capture)
 install(TARGETS api_example RUNTIME DESTINATION bin)
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
