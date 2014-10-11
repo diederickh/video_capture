@@ -123,9 +123,6 @@ if(WIN32)
     )
 
   if(USE_OPENGL)
-    list(APPEND videocapture_sources
-      ${EXTERN_SRC_DIR}/GLXW/glxw.c
-      )
 
     list(APPEND videocapture_libraries
       ${EXTERN_LIB_DIR}/glfw3.lib
