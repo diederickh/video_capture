@@ -164,7 +164,6 @@ namespace ca {
 
     BSTR device_name = NULL;
     while (S_OK == iter->Next(&dl)) {
-      printf("Found a decklink device!\n");
 
       r = dl->GetModelName(&device_name);
       if (S_OK != r) {

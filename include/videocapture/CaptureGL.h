@@ -272,6 +272,7 @@ namespace ca {
     CaptureGL(int driver = CA_DEFAULT_DRIVER);
     ~CaptureGL();
     int open(int device, int width, int height);                                       /* Setup the capturer for the given device and dimensions. We will try to find the most optimal pixel format format. This function will return -1 on error, else the same as the given divice */
+    int open(Settings cfg);                                                            /* Setup the capturer using the given settings (e.g. using the given capability id) . */
     int close();                                                                       /* Close the capture device */
     int start();                                                                       /* Start capturing */ 
     int stop();                                                                        /* Stop capturing */
@@ -520,22 +521,56 @@ namespace ca {
       settings.format = settings.capability;
     }
 
-    if(cap.open(settings) < 0) {
-      printf("Error: cannot open the capture device.\n");
+    if (open(settings) < 0) {
       return -2;
+    }
+
+    return device;
+  }
+
+  int CaptureGL::open(Settings cfg) {
+
+    if (CA_NONE == cfg.capability) {
+      printf("Error: trying to open the CaptureGL with a Settings object which doesn't have a capability set.\n");
+      return -1;
+    }
+
+    if (CA_NONE == cfg.device) {
+      printf("Error: not device id given, cannot open capture device.\n");
+      return -2;
+    }
+
+    std::vector<Capability> caps = getCapabilities(cfg.device);
+    for (size_t i = 0; i < caps.size(); ++i) {
+      Capability& cap = caps[i];
+      if (i == cfg.capability) {
+        if (CA_NONE == cap.pixel_format) {
+          printf("Error: trying to use capability %d, but that capability doesn't have a pixel format set.\n", i);
+          return -3;
+        }
+        fmt = cap.pixel_format;
+        width = cap.width;
+        height = cap.height;
+        break;
+      }
+    }
+
+    if(cap.open(cfg) < 0) {
+      printf("Error: cannot open the capture device.\n");
+      return -3;
     }
 
     if(setupGraphics() < 0) {
       printf("Error: cannot setup the GL graphics.\n");
-      return -3;
+      return -4;
     }
 
     // set the scale factor.
     GLint vp[4]; 
     glGetIntegerv(GL_VIEWPORT, vp);
     resize(vp[2], vp[3]);
-
-    return device;
+    
+    return 0;
   }
 
   int CaptureGL::close() {

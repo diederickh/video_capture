@@ -73,19 +73,29 @@ int main() {
 
   if (!gladLoadGL()) {
     printf("Cannot load GL.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
 
-  CaptureGL capture(CA_DECKLINK);
+  CaptureGL capture(); // CA_DECKLINK);
 
-  //capture.cap.listDevices();
+  capture.cap.listDevices();
   capture.cap.listCapabilities(0);
-  exit(1);
 
+#define USE_CAPABILITY 0
+#if USE_CAPABILITY
+  Settings cfg;
+  cfg.device = 0;
+  cfg.capability = 12;
+
+  if (capture.open(cfg) < 0) {
+    printf("Error: cannot open using the given capability.\n");
+    exit(EXIT_FAILURE);
+  }
+#else 
   //if(capture.open(0, 640, 480) < 0) {
   if(capture.open(0, 800, 600) < 0) {
   // if(capture.open(0, 1280, 720) < 0) {
@@ -93,6 +103,7 @@ int main() {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
+#endif
 
   if(capture.start() < 0) {
     ::exit(EXIT_FAILURE);

@@ -108,7 +108,6 @@ namespace ca {
 
   /* -------------------------------------- */
 
-
   class Format {                                                                    /* A format is used to describe an output format into which the raw buffers from the webcam can be converted. This is often a feature from the OS, like the AVCaptureVideoDataOutput. */
   public:
     Format();                                                                       /* Constructors; clears members. */ 
