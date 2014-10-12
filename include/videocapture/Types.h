@@ -33,16 +33,21 @@
 #define CA_YUVJ420BP 7                                                              /* YUV420 Bi-Planer Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
 #define CA_ARGB32 8                                                                 /* ARGB 8:8:8:8 32bpp, ARGBARGBARGB... */
 #define CA_BGRA32 9                                                                 /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
-#define CA_RGB24 10                                                                 /* RGB 8:8:8 24bit */
-#define CA_JPEG_OPENDML 11                                                          /* JPEG with Open-DML extensions */
-#define CA_H264 12                                                                  /* H264 */
-#define CA_MJPEG 13                                                                 /* MJPEG 2*/
+#define CA_RGBA32 10                                                                /* RGBA 8:8:8:8 32bpp. */
+#define CA_RGB24 11                                                                 /* RGB 8:8:8 24bit */
+#define CA_JPEG_OPENDML 12                                                          /* JPEG with Open-DML extensions */
+#define CA_H264 13                                                                  /* H264 */
+#define CA_MJPEG 14                                                                 /* MJPEG 2*/
 
 /* Frame rates */
 #define CA_FPS_60_00   6000
+#define CA_FPS_59_94   5994
+#define CA_FPS_50_00   5000
 #define CA_FPS_30_00   3000
+#define CA_FPS_29_97   2997
 #define CA_FPS_27_50   2750
 #define CA_FPS_25_00   2500
+#define CA_FPS_23_98   2398 
 #define CA_FPS_24_00   2400
 #define CA_FPS_22_50   2250
 #define CA_FPS_20_00   2000

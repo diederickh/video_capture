@@ -15,7 +15,18 @@ namespace ca {
     Decklink();
     ~Decklink();
     int listDevices();
+    int listCapabilities();
+
     std::vector<Device> getDevices();
+    std::vector<Capability> getCapabilities(int device);
+    IDeckLink* getDevice(int index);
+
+  public:
+
+#if defined(_WIN32)
+    static bool is_com_initialized;
+#endif
+
   };
 
 

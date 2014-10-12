@@ -31,13 +31,20 @@ some notes about the development.
 
 ````sh
 
-  - You need to download the DeckLink SDK
-  - On Linux you use compile with the DeckLinkAPI.cpp and link with libDeckLinkAPI.so which 
-    is loaded automatically when you installed desktop video. 
-  - Download the Desktop Video AUR package on Arch Linux: https://aur.archlinux.org/packages/decklink/
-  - Extract the tarbal 
-  - Run `makepkg -s`  (-s installs dependencies)
-  - Install with: `sudo pacman -U decklink-10.2.1a1-1-x86_64.pkg.tar.xz`
+  Linux
+  -----
+      - You need to download the DeckLink SDK
+      - On Linux you use compile with the DeckLinkAPI.cpp and link with libDeckLinkAPI.so which 
+        is loaded automatically when you installed desktop video. 
+      - Download the Desktop Video AUR package on Arch Linux: https://aur.archlinux.org/packages/decklink/
+      - Extract the tarbal 
+      - Run `makepkg -s`  (-s installs dependencies)
+      - Install with: `sudo pacman -U decklink-10.2.1a1-1-x86_64.pkg.tar.xz`
+
+  Windows
+  --------
+      - Download the DeckLink SDK       
+      - Copy the contents of `include/*` from the DeckLink SDK to `extern/win-vs*-*/include/decklink/
 
 
 ````
