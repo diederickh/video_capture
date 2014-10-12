@@ -14,7 +14,10 @@ namespace ca {
 
   /* -------------------------------------------------------------------- */
 
-  Decklink::Decklink() {
+  Decklink::Decklink(frame_callback fc, void* user) 
+    :Base(fc, user)
+    ,decklink_device(NULL)
+  {
 
 #if defined(_WIN32)
     if (false == is_com_initialized) {
@@ -25,14 +28,109 @@ namespace ca {
   }
 
   Decklink::~Decklink() {
+
+    if (decklink_device) {
+      delete decklink_device;
+    }
+
+    decklink_device = NULL;
   }
 
+  int Decklink::open(Settings settings) {
+
+    if (NULL != decklink_device) {
+      printf("Error: you already opened a decklink device. First close it before opening again.\n");
+      return -1;
+    }
+
+    /* @todo for now we only support capabilities, so settings.capability must be set. */
+    std::vector<Capability> caps = getCapabilities(settings.device);
+    if (settings.capability >= caps.size()) {
+      printf("Error: Invalid capabilty: %d in Decklink::open(), caps.size(): %lu.\n", settings.capability, caps.size());
+    }
+
+    IDeckLink* device = getDevice(settings.device);
+    if (NULL == device) {
+      printf("Error: cannot find the device with id: %d.\n", settings.device);
+      return -2;
+    }
+
+    decklink_device = new DecklinkDevice(device);
+    if (NULL == decklink_device) {
+      printf("Error: failed to allocate the DecklinkDevice wrapper. Out of mem?\n");
+      device->Release();
+      device = NULL; 
+      return -3;
+    }
+
+    decklink_device->setCallback(cb_frame, cb_user);
+
+    if (decklink_device->open(settings) < 0) {
+      printf("Error: failed to open the decklink device implementation.\n");
+      delete decklink_device;
+      decklink_device = NULL;
+      device->Release();
+      device = NULL;
+      return -4;
+    }
+
+    device->Release();
+    device = NULL;
+
+    return 0;
+  }
+
+  int Decklink::close() {
+    
+    int r = 0;
+
+    if (NULL == decklink_device) {
+      printf("Error: asked to close the Decklink but it looks like you didn't open it. \n");
+      return -1;
+    }
+
+    if (decklink_device->close() < 0) {
+      printf("Error: closing the DecklinkDevice returned an error.\n");
+      r = -2;
+    }
+
+    delete decklink_device;
+    decklink_device = NULL;
+
+    return r;
+  }
+
+  int Decklink::start() {
+
+    if (NULL == decklink_device) {
+      printf("Error: cannot start the decklink device because it's not opened yet. Call open() first.\n");
+      return -1;
+    }
+
+    return decklink_device->start();
+  }
+
+  int Decklink::stop() {
+
+    if (NULL == decklink_device) {
+      printf("Error: cannot stop the decklink device because it's not opened yet. Call open() first.\n");
+      return -1;
+    }
+
+    return decklink_device->stop();
+  }
+
+  void Decklink::update() {
+  }
+
+#if 0
   int Decklink::listDevices() {
 
     std::vector<Device> devs = getDevices();
 
     return 0;
   }
+#endif
 
   std::vector<Device> Decklink::getDevices() {
     
@@ -95,6 +193,11 @@ namespace ca {
     return devs;
   }
 
+  std::vector<Format> Decklink::getOutputFormats() {
+    std::vector<Format> fmts;
+    return fmts;
+  }
+
   std::vector<Capability> Decklink::getCapabilities(int index) {
 
     std::vector<Capability> caps;
@@ -124,7 +227,8 @@ namespace ca {
       input->Release();
       device->Release();
     }
-    
+
+    /* @todo see DecklinkDevice which has a copy of this list. */
     const BMDPixelFormat formats[] = { bmdFormat8BitYUV,   /* CA_UYVY422 */
                                        bmdFormat8BitARGB,  /* CA_ARGB32 */
                                        bmdFormat8BitBGRA,  /* CA_BGRA32 */
@@ -161,6 +265,7 @@ namespace ca {
       }
 
       while (formats[fmt_dx] != 0) {
+
         r = input->DoesSupportVideoMode(mode->GetDisplayMode(), 
                                         formats[fmt_dx], 
                                         bmdVideoInputFlagDefault, 
@@ -176,7 +281,11 @@ namespace ca {
           cap.width = (int) mode->GetWidth();
           cap.height = (int) mode->GetHeight();
           cap.fps = fps_from_rational(frame_num, frame_den);
+          cap.pixel_format = formats_map[fmt_dx];
           cap.capability_index = i;
+          cap.fps_index = 0;
+          cap.pixel_format_index = fmt_dx;
+          cap.user = NULL;
           caps.push_back(cap);
           i++;
         }
@@ -187,22 +296,9 @@ namespace ca {
       mode->Release();
     }
 
-#if 0
-    /* Set by the user */
-    int width;                                                                      /* Width for this capability. */
-    int height;                                                                     /* Height for this capability. */
-    int pixel_format;                                                               /* The pixel format for this capability. */
-    int fps;                                                                        /* The FPS, see CA_FPS_* above. */
-    
-    /* Set by the capturer implementation */
-    int capability_index;                                                           /* Used by the implementation. Is the ID of this specific capability */
-    int fps_index;                                                                  /* Used by the implementation, can be an index to an FPS array that is provided by the implementation */              
-    int pixel_format_index;                                                         /* Used by the implementation, represents an index to the pixel format for te implementation */
-    void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
-
-#endif   
-
     device->Release();
+    input->Release();
+    mode_iter->Release();
 
     return caps;
   }

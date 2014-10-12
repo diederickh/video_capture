@@ -44,10 +44,17 @@ set(gl_sources
   )
 
 if (USE_DECKLINK)
+
   list(APPEND videocapture_sources
     ${sd}/videocapture/decklink/Decklink.cpp
     ${sd}/videocapture/decklink/DecklinkDevice.cpp
+    ${sd}/videocapture/decklink/DecklinkCallback.cpp
     )
+
+  add_definitions(
+    -DUSE_DECKLINK=1
+    )
+
 endif()
 
 if(APPLE)

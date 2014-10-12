@@ -5,7 +5,6 @@
 
   Grabbing on Mac using AVFoundation.
 
-
  */
 #ifndef VIDEO_CAPTURE_AV_FOUNDATION_H
 #define VIDEO_CAPTURE_AV_FOUNDATION_H

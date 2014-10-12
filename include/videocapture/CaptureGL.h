@@ -269,7 +269,7 @@ namespace ca {
   class CaptureGL {
     
   public:
-    CaptureGL();
+    CaptureGL(int driver = CA_DEFAULT_DRIVER);
     ~CaptureGL();
     int open(int device, int width, int height);                                       /* Setup the capturer for the given device and dimensions. We will try to find the most optimal pixel format format. This function will return -1 on error, else the same as the given divice */
     int close();                                                                       /* Close the capture device */
@@ -429,8 +429,8 @@ namespace ca {
 
   /* -------------------------------------- */
 
-  CaptureGL::CaptureGL()
-    :cap(capturegl_on_frame, this)
+  CaptureGL::CaptureGL(int driver)
+    :cap(capturegl_on_frame, this, driver)
     ,fmt(CA_NONE)
     ,rendering_type(CA_RENDERING_TYPE_NONE)
     ,width(0)

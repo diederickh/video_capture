@@ -11,6 +11,7 @@
 #define CA_MEDIA_FOUNDATION 1                                                       /* Windows: Capture using Windows Media Foundation. */
 #define CA_AV_FOUNDATION 2                                                          /* Mac:     Capture using AVFoundation. */
 #define CA_V4L2 3                                                                   /* Linux:   Capture using Video4Linux 2. */
+#define CA_DECKLINK 4                                                               /* All:     Capture using a Decklink device. */  
 
 /* Default driver per OS */
 #if defined(__APPLE__)
@@ -82,7 +83,7 @@ namespace ca {
     /* Set by the user */
     int width;                                                                      /* Width for this capability. */
     int height;                                                                     /* Height for this capability. */
-    int pixel_format;                                                               /* The pixel format for this capability. */
+    int pixel_format;                                                               /* The pixel format for this capability, one of (CA_*)  */
     int fps;                                                                        /* The FPS, see CA_FPS_* above. */
     
     /* Set by the capturer implementation */
