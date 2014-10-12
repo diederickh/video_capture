@@ -277,6 +277,9 @@ namespace ca {
         }
 
         if (bmdDisplayModeNotSupported != mode_support) {
+          
+          _bstr_t bs(mode_bstr, false);
+
           Capability cap;
           cap.width = (int) mode->GetWidth();
           cap.height = (int) mode->GetHeight();
@@ -285,6 +288,7 @@ namespace ca {
           cap.capability_index = i;
           cap.fps_index = 0;
           cap.pixel_format_index = fmt_dx;
+          cap.description = bs;
           cap.user = NULL;
           caps.push_back(cap);
           i++;

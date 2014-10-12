@@ -84,6 +84,7 @@ int main() {
 
   //capture.cap.listDevices();
   capture.cap.listCapabilities(0);
+  exit(1);
 
   //if(capture.open(0, 640, 480) < 0) {
   if(capture.open(0, 800, 600) < 0) {

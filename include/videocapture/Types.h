@@ -90,6 +90,7 @@ namespace ca {
     int capability_index;                                                           /* Used by the implementation. Is the ID of this specific capability */
     int fps_index;                                                                  /* Used by the implementation, can be an index to an FPS array that is provided by the implementation */              
     int pixel_format_index;                                                         /* Used by the implementation, represents an index to the pixel format for te implementation */
+    std::string description;                                                        /* A capture driver can add some additional information here. */
     void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
   };
 
