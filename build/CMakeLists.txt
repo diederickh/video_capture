@@ -12,6 +12,7 @@ project(videocapture)
 include(ExternalProject)
 
 option(USE_OPENGL "Create OpenGL examples" ON)
+option(USE_DECKLINK "Use Decklink capture card." ON)
 
 set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
@@ -76,6 +77,14 @@ if(UNIX AND NOT APPLE)
     ${sd}/videocapture/linux/V4L2_Types.cpp
     ${sd}/videocapture/linux/V4L2_Utils.cpp
     )
+ 
+  if (USE_DECKLINK)
+    list(APPEND videocapture_sources
+      ${EXTERN_INC_DIR}/decklink/DeckLinkAPIDispatch.cpp
+      ${sd}/videocapture/decklink/Decklink.cpp
+      ${sd}/videocapture/decklink/DecklinkDevice.cpp
+      )
+  endif()
 
   list(APPEND videocapture_libraries
     udev
@@ -157,9 +166,12 @@ endif()
 
 add_executable(api_example ${sd}/api_example.cpp)
 target_link_libraries(api_example ${videocapture_libraries} videocapture)
-#add_dependencies(api_example video_capture)
 install(TARGETS api_example RUNTIME DESTINATION bin)
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
+
+add_executable(decklink_example ${sd}/decklink_example.cpp)
+target_link_libraries(decklink_example ${videocapture_libraries} videocapture)
+install(TARGETS decklink_example RUNTIME DESTINATION bin)
 

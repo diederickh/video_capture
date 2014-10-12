@@ -1,5 +1,5 @@
 #!/bin/sh
-
+set -x
 d=${PWD}
 
 if [ ! -d build.release ] ; then
@@ -23,6 +23,10 @@ fi
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
+if [ "${is_linux}" = "y" ] ; then
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${extern_path}/lib/
+fi
+
 if [ ! -d ${d}/sources ] ; then
     if [ "${is_linux}" = "y" ] || [ "${is_mac}" = "y" ] ; then
         ./build_unix_dependencies.sh
@@ -31,6 +35,8 @@ if [ ! -d ${d}/sources ] ; then
         ./build_win_dependencies.sh
     fi
 fi
+
+
 
 cd build.release
 
@@ -49,6 +55,7 @@ cmake --build . --target install --config Release
 cd ${install_path}/bin
 #./videocapture
 #./opengl_example
-./easy_opengl_example
+#./easy_opengl_example
 #./api_example
+./decklink_example
 
