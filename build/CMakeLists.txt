@@ -219,7 +219,9 @@ install(TARGETS api_example RUNTIME DESTINATION bin)
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
 
-add_executable(decklink_example ${sd}/decklink_example.cpp)
-target_link_libraries(decklink_example ${videocapture_libraries} videocapture)
-install(TARGETS decklink_example RUNTIME DESTINATION bin)
+if (USE_DECKLINK)
+  add_executable(decklink_example ${sd}/decklink_example.cpp)
+  target_link_libraries(decklink_example ${videocapture_libraries} videocapture)
+  install(TARGETS decklink_example RUNTIME DESTINATION bin)
+endif()
 

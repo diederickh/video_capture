@@ -545,7 +545,7 @@ namespace ca {
       Capability& cap = caps[i];
       if (i == cfg.capability) {
         if (CA_NONE == cap.pixel_format) {
-          printf("Error: trying to use capability %d, but that capability doesn't have a pixel format set.\n", i);
+          printf("Error: trying to use capability %lu, but that capability doesn't have a pixel format set.\n", i);
           return -3;
         }
         fmt = cap.pixel_format;

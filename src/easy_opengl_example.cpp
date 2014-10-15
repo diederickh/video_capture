@@ -80,7 +80,7 @@ int main() {
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
 
-  CaptureGL capture(); // CA_DECKLINK);
+  CaptureGL capture; 
 
   capture.cap.listDevices();
   capture.cap.listCapabilities(0);
