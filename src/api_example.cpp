@@ -56,10 +56,12 @@ int main() {
   cfg.capability = 0;
   cfg.format = 0;
 
-  Capture cap(fcallback, NULL);
+  Capture cap(fcallback, NULL); // , CA_DECKLINK);
   cap.listDevices();
   cap.listOutputFormats();
   cap.listCapabilities(cfg.device);
+
+  return 0;
 
   std::vector<Capability> caps;
   //  caps.push_back(Capability(width, height, CA_YUYV422));

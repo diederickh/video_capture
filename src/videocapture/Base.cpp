@@ -38,13 +38,19 @@ namespace ca {
     for(size_t i = 0; i < caps.size(); ++i) {
       Capability& cb = caps[i];
       
-      printf("[%02d] %d x %d @ %2.02f, %s\n", 
+      printf("[%02d] %d x %d @ %2.02f, %s", 
              cb.capability_index, 
              cb.width, 
              cb.height, 
              float(cb.fps/100.0f), 
              format_to_string(cb.pixel_format).c_str()
              );
+
+      if (cb.description.size() > 0) {
+        printf(", %s", cb.description.c_str());
+      }
+
+      printf("\n");
     }
     return (int)caps.size();
   }

@@ -6,12 +6,21 @@ cmake_minimum_required(VERSION 2.8)
 #  - EXTERN_INC_DIR      Path to the directory where we can find general headers e.g. png.h 
 #  - EXTERN_SRC_DIR      Path to the directory where we can find sources for dependencies (e.g. glad.c) 
 #  - TINYLIB_DIR         Path to tinylib base dir. 
+#
+#
+# DeckLink
+# ========
+#    - You need to download the DeckLink SDK and copy the include dir from
+#      the SDK to extern/*/include/decklink/
+#    - On windows we generate a .c and .h file using a custom target.  
+
 
 project(videocapture)
 
 include(ExternalProject)
 
 option(USE_OPENGL "Create OpenGL examples" ON)
+option(USE_DECKLINK "Use Decklink capture card." ON)
 
 set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
@@ -33,6 +42,20 @@ set(videocapture_include_dirs
 set(gl_sources 
   ${EXTERN_SRC_DIR}/glad.c
   )
+
+if (USE_DECKLINK)
+
+  list(APPEND videocapture_sources
+    ${sd}/videocapture/decklink/Decklink.cpp
+    ${sd}/videocapture/decklink/DecklinkDevice.cpp
+    ${sd}/videocapture/decklink/DecklinkCallback.cpp
+    )
+
+  add_definitions(
+    -DUSE_DECKLINK=1
+    )
+
+endif()
 
 if(APPLE)
 
@@ -76,10 +99,16 @@ if(UNIX AND NOT APPLE)
     ${sd}/videocapture/linux/V4L2_Types.cpp
     ${sd}/videocapture/linux/V4L2_Utils.cpp
     )
-
+ 
   list(APPEND videocapture_libraries
     udev
     )
+
+  if (USE_DECKLINK)
+    list(APPEND videocapture_sources
+      ${EXTERN_INC_DIR}/decklink/DeckLinkAPIDispatch.cpp
+      )
+  endif()
 
   add_definitions(-D__STDC_CONSTANT_MACROS)
 
@@ -122,6 +151,30 @@ if(WIN32)
     Shlwapi.lib  # QISearch (Callback)
     )
 
+  if (USE_DECKLINK)
+
+    if (NOT EXISTS ${EXTERN_INC_DIR}/decklink/DeckLinkAPI.idl)
+      message(FATAL_ERROR "Cannot find the decklink api. Copy the SDK include files to ${EXTERN_INC_DIR}/decklink/")
+    endif()
+
+    # midl.exe only works when the output directory (-out) actually exists
+    #set(vd_sdk_dir ${CMAKE_CURRENT_BINARY_DIR}/)
+    add_custom_target(DeckLinkAPI
+      COMMAND midl.exe -nologo -W1 -char signed -env win32 -out "${CMAKE_CURRENT_BINARY_DIR}" -h ${EXTERN_INC_DIR}/decklink/DeckLinkAPI.h /iid DeckLinkAPI_i.c ${EXTERN_INC_DIR}/decklink/DeckLinkAPI.idl
+      )
+
+    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/DeckLinkAPI_i.c PROPERTIES GENERATED TRUE)
+
+    list(APPEND videocapture_sources ${CMAKE_CURRENT_BINARY_DIR}/DeckLinkAPI_i.c)
+
+    list(APPEND videocapture_libraries comsuppw.lib)
+
+    include_directories(${CMAKE_CURRENT_BINARY_DIR})
+      
+  endif() 
+
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/DeckLinkAPI_i.c PROPERTIES GENERATED TRUE)
+
   if(USE_OPENGL)
 
     list(APPEND videocapture_libraries
@@ -137,6 +190,10 @@ endif()
 
 include_directories(${videocapture_include_dirs})
 add_library(videocapture ${videocapture_sources})
+
+if (USE_DECKLINK)
+  add_dependencies(videocapture DeckLinkAPI)
+endif()
 
 # Basic API example
 if(USE_OPENGL)
@@ -157,9 +214,14 @@ endif()
 
 add_executable(api_example ${sd}/api_example.cpp)
 target_link_libraries(api_example ${videocapture_libraries} videocapture)
-#add_dependencies(api_example video_capture)
 install(TARGETS api_example RUNTIME DESTINATION bin)
 
 install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
 install(TARGETS videocapture ARCHIVE DESTINATION lib)
+
+if (USE_DECKLINK)
+  add_executable(decklink_example ${sd}/decklink_example.cpp)
+  target_link_libraries(decklink_example ${videocapture_libraries} videocapture)
+  install(TARGETS decklink_example RUNTIME DESTINATION bin)
+endif()
 

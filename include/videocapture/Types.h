@@ -11,6 +11,7 @@
 #define CA_MEDIA_FOUNDATION 1                                                       /* Windows: Capture using Windows Media Foundation. */
 #define CA_AV_FOUNDATION 2                                                          /* Mac:     Capture using AVFoundation. */
 #define CA_V4L2 3                                                                   /* Linux:   Capture using Video4Linux 2. */
+#define CA_DECKLINK 4                                                               /* All:     Capture using a Decklink device. */  
 
 /* Default driver per OS */
 #if defined(__APPLE__)
@@ -33,16 +34,21 @@
 #define CA_YUVJ420BP 7                                                              /* YUV420 Bi-Planer Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
 #define CA_ARGB32 8                                                                 /* ARGB 8:8:8:8 32bpp, ARGBARGBARGB... */
 #define CA_BGRA32 9                                                                 /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
-#define CA_RGB24 10                                                                 /* RGB 8:8:8 24bit */
-#define CA_JPEG_OPENDML 11                                                          /* JPEG with Open-DML extensions */
-#define CA_H264 12                                                                  /* H264 */
-#define CA_MJPEG 13                                                                 /* MJPEG 2*/
+#define CA_RGBA32 10                                                                /* RGBA 8:8:8:8 32bpp. */
+#define CA_RGB24 11                                                                 /* RGB 8:8:8 24bit */
+#define CA_JPEG_OPENDML 12                                                          /* JPEG with Open-DML extensions */
+#define CA_H264 13                                                                  /* H264 */
+#define CA_MJPEG 14                                                                 /* MJPEG 2*/
 
 /* Frame rates */
 #define CA_FPS_60_00   6000
+#define CA_FPS_59_94   5994
+#define CA_FPS_50_00   5000
 #define CA_FPS_30_00   3000
+#define CA_FPS_29_97   2997
 #define CA_FPS_27_50   2750
 #define CA_FPS_25_00   2500
+#define CA_FPS_23_98   2398 
 #define CA_FPS_24_00   2400
 #define CA_FPS_22_50   2250
 #define CA_FPS_20_00   2000
@@ -77,13 +83,14 @@ namespace ca {
     /* Set by the user */
     int width;                                                                      /* Width for this capability. */
     int height;                                                                     /* Height for this capability. */
-    int pixel_format;                                                               /* The pixel format for this capability. */
+    int pixel_format;                                                               /* The pixel format for this capability, one of (CA_*)  */
     int fps;                                                                        /* The FPS, see CA_FPS_* above. */
     
     /* Set by the capturer implementation */
     int capability_index;                                                           /* Used by the implementation. Is the ID of this specific capability */
     int fps_index;                                                                  /* Used by the implementation, can be an index to an FPS array that is provided by the implementation */              
     int pixel_format_index;                                                         /* Used by the implementation, represents an index to the pixel format for te implementation */
+    std::string description;                                                        /* A capture driver can add some additional information here. */
     void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
   };
 
@@ -100,7 +107,6 @@ namespace ca {
   };
 
   /* -------------------------------------- */
-
 
   class Format {                                                                    /* A format is used to describe an output format into which the raw buffers from the webcam can be converted. This is often a feature from the OS, like the AVCaptureVideoDataOutput. */
   public:

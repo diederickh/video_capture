@@ -25,6 +25,17 @@ namespace ca {
     }
 #endif
 
+#if defined(USE_DECKLINK)
+    if (cap != NULL && driver == CA_DECKLINK) {
+      printf("Error: cap is already initialized but the driver is CA_DECKLINK! Not supposed to happen.\n");
+      ::exit(EXIT_FAILURE);
+    }
+    
+    if (driver == CA_DECKLINK) {
+      cap = new Decklink(fc, user);
+    }
+#endif
+
     if(cap == NULL) {
       printf("Error: no valid capture driver found.\n");
       ::exit(EXIT_FAILURE);
@@ -37,7 +48,6 @@ namespace ca {
       delete cap;
       cap = NULL;
     }
-    
   }
 
   int Capture::open(Settings settings) {

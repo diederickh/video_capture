@@ -29,6 +29,10 @@
 #  include <videocapture/win/MediaFoundation_Capture.h>
 #endif
 
+#if defined(USE_DECKLINK)
+#  include <videocapture/decklink/Decklink.h>
+#endif
+
 namespace ca {
 
   class Capture {

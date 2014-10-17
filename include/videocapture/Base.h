@@ -33,10 +33,10 @@ namespace ca {
     virtual std::vector<Device> getDevices() = 0;                                 /* Retrieve a list with devices. */
     virtual std::vector<Format> getOutputFormats() = 0;                           /* Some capture SDKs have support for automatic conversion of the raw data it receives from capture devices to more common output values like YUV. */
 
-    int listDevices();                                                           /* List the available capture devices for the implementation. */
+    int listDevices();                                                           /* List the available capture devices for the implementation and return the number of found devices. */
     int listCapabilities(int device);                                            /* List the available capabilities for the given device. */
     int listOutputFormats();                                                     /* List the available output formats the at SDK of the OS/.. supports. On mac these are the output formats of the AVCaptureVideoDataOutput */
-    int findCapability(int device, int width, int height, int fmt);               /* Get the best matching capability for the given format and dimensions. We return the capability index or -1 if not found. */
+    int findCapability(int device, int width, int height, int fmt);              /* Get the best matching capability for the given format and dimensions. We return the capability index or -1 if not found. */
 
   public:
     frame_callback cb_frame;                                                      /* The frame callback. */

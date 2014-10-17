@@ -71,27 +71,39 @@ int main() {
   glfwMakeContextCurrent(win);
   glfwSwapInterval(1);
 
-
   if (!gladLoadGL()) {
     printf("Cannot load GL.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
-
 
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
 
-  CaptureGL capture;
+  CaptureGL capture; 
 
-  //capture.cap.listDevices();
-  //capture.cap.listCapabilities(0);
+  capture.cap.listDevices();
+  capture.cap.listCapabilities(0);
 
+#define USE_CAPABILITY 0
+#if USE_CAPABILITY
+  Settings cfg;
+  cfg.device = 0;
+  cfg.capability = 12;
+
+  if (capture.open(cfg) < 0) {
+    printf("Error: cannot open using the given capability.\n");
+    exit(EXIT_FAILURE);
+  }
+#else 
   //if(capture.open(0, 640, 480) < 0) {
   if(capture.open(0, 800, 600) < 0) {
+  // if(capture.open(0, 1280, 720) < 0) {
+  // if(capture.open(0, 1920, 1080) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
+#endif
 
   if(capture.start() < 0) {
     ::exit(EXIT_FAILURE);
