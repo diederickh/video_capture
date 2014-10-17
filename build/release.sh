@@ -49,6 +49,6 @@ cmake --build . --target install --config Release
 cd ${install_path}/bin
 #./videocapture
 #./opengl_example
-./easy_opengl_example
-#./api_example
+#./easy_opengl_example
+./api_example
 
