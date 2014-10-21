@@ -349,7 +349,9 @@
       ca::Capability cap;
       
       if ([fps minFrameRate] != [fps maxFrameRate]) {
-        printf("@todo -  Need to handle a capability with different min/max framerates. This works but need more testing.\n");
+#if !defined(NDEBUG)        
+        printf("@todo -  Need to handle a capability with different min/max framerates. This works but need more testing. min framerate: %f, max framerate: %f\n", (float)[fps minFrameRate], (float)[fps maxFrameRate]);
+#endif
         cap.fps = ca::fps_from_rational((uint64_t)1, (uint64_t) [fps maxFrameRate]);
       }
       else {
@@ -369,6 +371,7 @@
 
       ++fps_dx;	
     }
+
     fmt_dx++;
   }
  
@@ -415,11 +418,24 @@
 
 // Convert a pixel format type to a videocapture type
 - (int) getCapturePixelFormat: (CMPixelFormatType) ref {
+
   switch(ref) {
-    case kCMPixelFormat_422YpCbCr8:                return CA_UYVY422;
-    case kCMPixelFormat_422YpCbCr8_yuvs:           return CA_YUYV422; 
-    case kCMVideoCodecType_JPEG_OpenDML:           return CA_JPEG_OPENDML;
-    default: return CA_NONE;
+
+    case kCVPixelFormatType_422YpCbCr8:                   { return CA_UYVY422;        } // Cb Y0 Cr Y1
+    case kCVPixelFormatType_422YpCbCr8_yuvs:              { return CA_YUYV422;        } // Y0 Cb Y1 Cr  
+    case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: { return CA_YUV420BP;       }
+    case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:  { return CA_YUVJ420BP;      }
+    case kCVPixelFormatType_32ARGB:                       { return CA_ARGB32;         }
+    case kCVPixelFormatType_32BGRA:                       { return CA_BGRA32;         }
+    case kCMVideoCodecType_JPEG_OpenDML:                  { return CA_JPEG_OPENDML;   }
+
+    default: {
+      NSNumber* pixnum = [NSNumber numberWithInt: ref];
+      std::string type = [self cvPixelFormatToString:pixnum];
+      [pixnum release];
+      printf("Unknown and unhandled pixel format type: %u, %s\n", (unsigned int)ref, type.c_str());
+      return CA_NONE;
+    }
   };
 }
 
@@ -427,7 +443,16 @@
 /* -------------------------------------- */
 
 - (NSString* const) widthHeightToCaptureSessionPreset:(int) w andHeight:(int) h {
-
+#ifdef __IPHONE_7_0
+  if (w == 352 && h == 288) { return AVCaptureSessionPreset352x288; }  /* iPhone 5.0+ */
+  else if (w == 640 && h == 480) { return AVCaptureSessionPreset640x480; } /* iPhone 4.0+ */
+  else if (w == 1280 && h == 720) { return AVCaptureSessionPreset1280x720; } /* iPhone 4.0+ */
+  else if (w == 1920 && h == 1080) { return AVCaptureSessionPreset1920x1080; } /* iPhone 5.0+ */
+  else if (w == 960 && h == 540) { return AVCaptureSessionPresetiFrame960x540; } /* iPhone 5.0+ */
+  else {
+    return AVCaptureSessionPresetHigh;
+  }
+#else
   if(w == 320 && h == 240) { return AVCaptureSessionPreset320x240; }
   else if(w == 352 && h == 288) { return AVCaptureSessionPreset352x288; } 
   else if(w == 640 && h == 480) { return AVCaptureSessionPreset640x480; }
@@ -436,6 +461,7 @@
   else {
     return AVCaptureSessionPresetHigh; // if no preset matches we return the highest
   }
+#endif
 }
 
 - (void) printSupportedPixelFormatsByVideoDataOutput: (AVCaptureVideoDataOutput*) o {

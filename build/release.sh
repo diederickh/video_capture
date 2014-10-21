@@ -40,7 +40,7 @@ cd build.release
 
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
-    -DUSE_OPENGL=True \
+    -DUSE_OPENGL=OFF \
     -DEXTERN_LIB_DIR=${extern_path}/lib \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
@@ -54,7 +54,7 @@ cd ${install_path}/bin
 #./videocapture
 #./opengl_example
 #./easy_opengl_example
-./api_example
+#./api_example
 #./easy_opengl_example
 #./api_example
 #./decklink_example

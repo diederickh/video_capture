@@ -19,8 +19,43 @@ project(videocapture)
 
 include(ExternalProject)
 
-option(USE_OPENGL "Create OpenGL examples" ON)
-option(USE_DECKLINK "Use Decklink capture card." ON)
+option(USE_IOS "Build an iOS library" ON)
+option(USE_IOS_SIMULATOR "Build for the iOS simulator." OFF)
+option(USE_OPENGL "Create OpenGL examples" OFF)
+option(USE_DECKLINK "Use Decklink capture card." OFF)
+
+message(STATUS "USE_IOS: ${USE_IOS}")
+message(STATUS "USE_IOS_SIMULATOR: ${USE_IOS_SIMULATOR}")
+message(STATUS "USE_OPENGL: ${USE_OPENGL}")
+message(STATUS "USE_DECKLINK: ${USE_DECKLINK}")
+
+
+if (USE_IOS) 
+
+  option(USE_IOS_DEVICE "Build an iOS library for a iPhone" ON)
+
+  if (USE_IOS_SIMULATOR)
+    set(ios_sysroot "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/")
+    set(CMAKE_OSX_SYSROOT "${ios_sysroot}SDKs/iPhoneSimulator7.1.sdk/")
+    set(CMAKE_OSX_ARCHITECTURES "i386")
+    set(CMAKE_C_COMPILER ${ios_sysroot}/usr/bin/gcc)
+    set(CMAKE_CXX_COMPILER ${ios_sysroot}/usr/bin/g++)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-abi-version=2")
+    include_directories(CMAKE_OSX_SYSROOT "${io_sysroot}/Developer/SDKs/iPhoneSimulator7.1.sdk/usr/include/")
+  endif()
+  
+  if (USE_IOS_DEVICE)
+    set(ios_root  "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/")
+    set(CMAKE_OSX_SYSROOT "${ios_root}SDKs/iPhoneOS8.1.sdk/")
+    set(CMAKE_OSX_ARCHITECTURES "armv7")
+    set(CMAKE_C_COMPILER /usr/bin/clang)
+    set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-abi-version=2 -fvisibility=hidden -fvisibility-inlines-hidden -isysroot ${ios_sysroot}")
+    include_directories(${ios_root}SDKs/iPhoneOS8.1.sdk/usr/include)
+    message(STATUS "INC: ${CMAKE_OSX_SYSROOT}/usr/include")
+  endif()
+
+endif()
 
 set(bd ${CMAKE_CURRENT_LIST_DIR}/..)
 set(sd ${bd}/src)
@@ -66,19 +101,24 @@ if(APPLE)
 
   find_library(fr_core_foundation CoreFoundation)
   find_library(fr_avfoundation AVFoundation)
-  find_library(fr_cocoa Cocoa)
   find_library(fr_core_video CoreVideo)
   find_library(fr_core_media CoreMedia)
   
   list(APPEND videocapture_libraries
     ${fr_core_foundation}
     ${fr_avfoundation}
-    ${fr_cocoa}
     ${fr_core_video}
     ${fr_core_media}
     )
 
-  if(USE_OPENGL)
+  if (NOT USE_IOS)
+    find_library(fr_cocoa Cocoa)
+    list(APPEND video_capture_libraries
+      ${fr_cocoa}
+      )
+  endif()
+
+  if(USE_OPENGL AND NOT USE_IOS)
 
     find_library(fr_opengl OpenGL)
     find_library(fr_iokit IOKit)
@@ -190,13 +230,15 @@ endif()
 
 include_directories(${videocapture_include_dirs})
 add_library(videocapture ${videocapture_sources})
+install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
+install(TARGETS videocapture ARCHIVE DESTINATION lib)
 
 if (USE_DECKLINK)
   add_dependencies(videocapture DeckLinkAPI)
 endif()
 
 # Basic API example
-if(USE_OPENGL)
+if(USE_OPENGL AND NOT USE_IOS)
 
   # Plain OpenGL example
   # add_executable(opengl_example ${sd}/opengl_example.cpp) 
@@ -212,12 +254,12 @@ if(USE_OPENGL)
 
 endif()
 
-add_executable(api_example ${sd}/api_example.cpp)
-target_link_libraries(api_example ${videocapture_libraries} videocapture)
-install(TARGETS api_example RUNTIME DESTINATION bin)
+if (NOT USE_IOS)
+  add_executable(api_example ${sd}/api_example.cpp)
+  target_link_libraries(api_example ${videocapture_libraries} videocapture)
+  install(TARGETS api_example RUNTIME DESTINATION bin)
+endif()
 
-install(DIRECTORY ${bd}/include/videocapture DESTINATION include)
-install(TARGETS videocapture ARCHIVE DESTINATION lib)
 
 if (USE_DECKLINK)
   add_executable(decklink_example ${sd}/decklink_example.cpp)
