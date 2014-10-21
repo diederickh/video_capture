@@ -25,6 +25,17 @@ namespace ca {
     }
 #endif
 
+#if defined(USE_DECKLINK)
+    if (cap != NULL && driver == CA_DECKLINK) {
+      printf("Error: cap is already initialized but the driver is CA_DECKLINK! Not supposed to happen.\n");
+      ::exit(EXIT_FAILURE);
+    }
+    
+    if (driver == CA_DECKLINK) {
+      cap = new Decklink(fc, user);
+    }
+#endif
+
     if(cap == NULL) {
       printf("Error: no valid capture driver found.\n");
       ::exit(EXIT_FAILURE);
@@ -37,7 +48,6 @@ namespace ca {
       delete cap;
       cap = NULL;
     }
-    
   }
 
   int Capture::open(Settings settings) {
@@ -100,11 +110,24 @@ namespace ca {
     return cap->findCapability(device, width, height, fmt);
   }
 
+  int Capture::findCapability(int device, std::vector<Capability> caps) {
+    int capid = -1;
+    for (size_t i = 0; i < caps.size(); ++i) {
+      Capability& check = caps[i];
+      printf("%d, %d\n", check.width, check.height);
+      capid = cap->findCapability(device, check.width, check.height, check.pixel_format);
+      if (capid >= 0) {
+        break;
+      }
+    }
+    return capid;
+  }
+
   int Capture::findCapability(int device, int width, int height, int* fmts, int nfmts) {
     int capid = -1;
     for (int i = 0; i < nfmts; ++i) {
       capid = cap->findCapability(device, width, height, fmts[i]);
-      if (capid > 0) {
+      if (capid >= 0) {
         return capid;
       }
     }

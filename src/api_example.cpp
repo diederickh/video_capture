@@ -6,7 +6,7 @@
   This example shows a minimal example on how to list
   the capture devices, list capabilities and output formats.
 
- */
+*/
 #include <signal.h>
 
 #if defined(__APPLE__) || defined(__linux)
@@ -18,13 +18,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fstream>
 #include <videocapture/Capture.h>
+
+#define WRITE_RAW_FILE 0
+
+#if WRITE_RAW_FILE
+bool wrote_frame = false;
+std::fstream outfile;
+#endif
 
 using namespace ca;
 
 bool must_run = true;
 
-void fcallback(void* pixels, int nbytes, void* user);
+void fcallback(PixelBuffer& buffer); 
 void sig_handler(int sig);
 
 int main() {
@@ -32,18 +40,39 @@ int main() {
 
   signal(SIGINT, sig_handler);
 
+#if WRITE_RAW_FILE
+  outfile.open("generated.raw", std::ios::binary | std::ios::out);
+  if (!outfile.is_open()) {
+    printf("Error: failed to open `generated.raw`.\n");
+    exit(1);
+  }
+#endif
+
   int width = 640;
   int height = 480;
 
   Settings cfg;
-  cfg.device = 0;
+  cfg.device = 1;
   cfg.capability = 0;
   cfg.format = 0;
 
-  Capture cap(fcallback, NULL);
+  Capture cap(fcallback, NULL); // , CA_DECKLINK);
   cap.listDevices();
   cap.listOutputFormats();
-  cap.listCapabilities(cfg.device);
+  //  cap.listCapabilities(cfg.device);
+
+
+  std::vector<Capability> caps;
+  caps.push_back(Capability(width, height, CA_YUYV422));
+  //caps.push_back(Capability(width, height, CA_UYVY422));
+  //caps.push_back(Capability(width, height, CA_YUV420P));
+  cfg.capability = cap.findCapability(cfg.device, caps);
+  if (cfg.capability > 0) {
+    printf("Found capability: %d\n", cfg.capability);
+  }
+  else {
+    printf("Could not find any of the given capabilities.\n");
+  }
 
   int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
   cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 3);
@@ -78,11 +107,25 @@ int main() {
     printf("Error: cannot close.\n");
   }
 
+#if WRITE_RAW_FILE
+  outfile.flush();
+  outfile.close();
+  printf("Info: Wrote raw YUV file.\n");
+#endif
+
   return EXIT_SUCCESS;
 }
 
-void fcallback(void* pixels, int nbytes, void* user) {
-  printf("Frame callback: %d bytes\n", nbytes);
+void fcallback(PixelBuffer& buffer) { 
+
+  printf("Frame callback: %lu bytes, stride: %lu \n", buffer.nbytes, buffer.stride[0]);
+
+#if WRITE_RAW_FILE
+  if (false == wrote_frame) {
+    outfile.write((const char*)buffer.plane[0], buffer.nbytes);
+    wrote_frame = true;
+  }
+#endif
 }
 
 void sig_handler(int sig) {

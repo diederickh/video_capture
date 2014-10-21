@@ -14,10 +14,14 @@ namespace ca {
 
     switch(v) {
       case CA_FPS_60_00: return CA_FPS_60_00;
-      case CA_FPS_30_00: return CA_FPS_30_00; 
+      case CA_FPS_59_94: return CA_FPS_59_94;
+      case CA_FPS_50_00: return CA_FPS_50_00;
+      case CA_FPS_30_00: return CA_FPS_30_00;
+      case CA_FPS_29_97: return CA_FPS_29_97;
       case CA_FPS_27_50: return CA_FPS_27_50;
       case CA_FPS_25_00: return CA_FPS_25_00;
       case CA_FPS_24_00: return CA_FPS_24_00;
+      case CA_FPS_23_98: return CA_FPS_23_98;
       case CA_FPS_22_50: return CA_FPS_22_50;
       case CA_FPS_20_00: return CA_FPS_20_00;
       case CA_FPS_17_50: return CA_FPS_17_50;

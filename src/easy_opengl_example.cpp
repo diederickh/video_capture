@@ -12,12 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-
-#if defined(__linux) || defined(_WIN32)
-#  include <GLXW/glxw.h>
-#endif
  
-#define GLFW_INCLUDE_GLCOREARB
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #define ROXLU_USE_MATH
@@ -74,26 +70,40 @@ int main() {
   glfwSetMouseButtonCallback(win, button_callback);
   glfwMakeContextCurrent(win);
   glfwSwapInterval(1);
- 
-#if defined(__linux) || defined(_WIN32)
-  if(glxwInit() != 0) {
-    printf("Error: cannot initialize glxw.\n");
-    ::exit(EXIT_FAILURE);
+
+  if (!gladLoadGL()) {
+    printf("Cannot load GL.\n");
+    exit(EXIT_FAILURE);
   }
-#endif
- 
+
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
-  CaptureGL capture;
 
-  //capture.cap.listDevices();
-  //capture.cap.listCapabilities(1);
+  CaptureGL capture; 
 
-  if(capture.open(0, 640, 480) < 0) {
+  capture.cap.listDevices();
+  capture.cap.listCapabilities(0);
+
+#define USE_CAPABILITY 0
+#if USE_CAPABILITY
+  Settings cfg;
+  cfg.device = 0;
+  cfg.capability = 12;
+
+  if (capture.open(cfg) < 0) {
+    printf("Error: cannot open using the given capability.\n");
+    exit(EXIT_FAILURE);
+  }
+#else 
+  //if(capture.open(0, 640, 480) < 0) {
+  if(capture.open(0, 800, 600) < 0) {
+  // if(capture.open(0, 1280, 720) < 0) {
+  // if(capture.open(0, 1920, 1080) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
+#endif
 
   if(capture.start() < 0) {
     ::exit(EXIT_FAILURE);
@@ -102,7 +112,7 @@ int main() {
   while(!glfwWindowShouldClose(win)) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+ 
     capture.update();
     capture.draw();
     capture.draw(10, 10, 320, 240);

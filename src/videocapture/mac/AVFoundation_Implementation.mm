@@ -14,6 +14,8 @@
     session = nil;
     input = nil;
     output = nil;
+    pixel_format = 0;
+    is_pixel_buffer_set = 0;
   }
 
   return self;
@@ -26,6 +28,7 @@
 
   cb_frame = nil;
   cb_user = nil;
+  pixel_buffer.user = NULL;
 
   [super dealloc];
 }
@@ -148,13 +151,26 @@
       fmt_type = [self captureFormatToCvPixelFormat: formats[0].format];
     }
     
-    // Tell the AVCaptureVideoDataOutput to convert the incoming data if necessary (and specify w/h)
+    /* Tell the AVCaptureVideoDataOutput to convert the incoming data if necessary (and specify w/h) */
     [output setVideoSettings: [NSDictionary dictionaryWithObjectsAndKeys: 
                                  [NSNumber numberWithInt:fmt_type], kCVPixelBufferPixelFormatTypeKey,
                                  [NSNumber numberWithInteger:cap.width], (id)kCVPixelBufferWidthKey,
                                  [NSNumber numberWithInteger:cap.height], (id)kCVPixelBufferHeightKey,
                                  nil]];
 
+    /* 
+       Cache the currently used pixel format that is used to fill the PixelBuffer 
+       that we pass to the callback. We retrieve the pixel format from the current
+       device to make sure that we're getting the one which is actually used. 
+    */
+    int cv_fmt = (int)CMFormatDescriptionGetMediaSubType([[cap_device activeFormat] formatDescription]);
+    NSNumber* cv_fmt_num = [NSNumber numberWithInt: cv_fmt];
+    pixel_format = [self cvPixelFormatToCaptureFormat: cv_fmt_num];
+    [cv_fmt_num release];
+    if (pixel_format == CA_NONE) {
+      printf("Error: failed to find the capture pixel format for the currently used cvPixel format.\n");
+      exit(EXIT_FAILURE);
+    }
 
     // Setup framegrabber callback
     dispatch_queue_t queue = dispatch_queue_create("Video Queue", DISPATCH_QUEUE_SERIAL);
@@ -212,6 +228,8 @@
   input = nil;
   output = nil;
   session = nil;
+  pixel_format = 0;
+  is_pixel_buffer_set = 0;
 
   return 1;
 }
@@ -260,6 +278,7 @@
 - (void) setCallback: (ca::frame_callback) cb user: (void*) u {
   cb_frame = cb;
   cb_user = u;
+  pixel_buffer.user = u;
 }
 
 // Capture callback.
@@ -267,7 +286,82 @@
  didOutputSampleBuffer: (CMSampleBufferRef) sampleBuffer
         fromConnection: (AVCaptureConnection*) connection 
 {
- 
+  
+  if (nil == cb_frame) {
+    printf("Error: capturing frames but the `cb_frame` callback is not set, not supposed to happen. Stopping\n");
+    exit(EXIT_FAILURE);
+  }
+
+  CVPixelBufferRef buffer = CMSampleBufferGetImageBuffer(sampleBuffer);  /* Note: CVImageBufferRef == CVPixelBufferRef, see: http://stackoverflow.com/questions/18660861/convert-cvimagebufferref-to-cvpixelbufferref */
+  if (NULL == buffer) {
+    printf("Error: the returned CVImageBufferRef is NULL. Stopping.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Fill the pixel_buffer member with some info that won't change per frame. */
+  if (0 == is_pixel_buffer_set) { 
+    if (true == CVPixelBufferIsPlanar(buffer)) {
+      size_t plane_count = CVPixelBufferGetPlaneCount(buffer);
+      if (plane_count > 3) {
+        printf("Error: we got a plane count bigger then 3, not supported yet. Stopping.\n");
+        exit(EXIT_FAILURE);
+      }
+      for (size_t i = 0; i < plane_count; ++i) {
+        pixel_buffer.width[i] = CVPixelBufferGetWidthOfPlane(buffer, i);
+        pixel_buffer.height[i] = CVPixelBufferGetHeightOfPlane(buffer, i);
+        pixel_buffer.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+        pixel_buffer.nbytes += pixel_buffer.stride[i] * pixel_buffer.height[i];
+      }
+    }
+    else {
+      pixel_buffer.width[0] = CVPixelBufferGetWidth(buffer);
+      pixel_buffer.height[0] = CVPixelBufferGetHeight(buffer);
+      pixel_buffer.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
+      pixel_buffer.nbytes = pixel_buffer.stride[0] * pixel_buffer.height[0];
+    }
+    is_pixel_buffer_set = 1;
+  }
+
+  CVPixelBufferLockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+  {
+    if (CA_YUYV422 == pixel_format     /* kCVPixelFormatType_422YpCbCr8_yuvs */
+        || CA_UYVY422 == pixel_format  /* kCVPixelFormatType_422YpCbCr8 */
+        || CA_BGRA32 == pixel_format   /* kCVPixelFormatType_32BGRA */
+    )
+    {
+      pixel_buffer.plane[0] = (uint8_t*)CVPixelBufferGetBaseAddress(buffer);
+    }
+    else if (CA_YUVJ420BP == pixel_format) { /* kCVPixelFormatType_420YpCbCr8BiPlanarFullRange */
+      pixel_buffer.plane[0] = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(buffer, 0);
+      pixel_buffer.plane[1] = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(buffer, 1);
+    }
+    else {
+      printf("Error: unhandled and unknown pixel format: %d", pixel_format);
+    }
+
+    cb_frame(pixel_buffer);
+  }
+  
+  CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+
+
+  /* --------------------- OLD CODE LEAVING THIS HERE FOR REFERENCE -------------------------- */
+#if 0
+  CMFormatDescriptionRef desc_ref = CMSampleBufferGetFormatDescription(sampleBuffer);
+
+  int pix_fmt = CMFormatDescriptionGetMediaSubType(desc_ref);
+  if (kCVPixelFormatType_422YpCbCr8 == pix_fmt) { 
+    printf("> kCVPixelFormatType_422YpCbCr8 (CA_UYVY422).\n");
+  }
+  else if(kCVPixelFormatType_422YpCbCr8_yuvs == pix_fmt) {
+    printf("> kCVPixelFormatType_422YpCbCr8_yuvs (CA_YUYV422).\n");
+  }
+  else if (kCVPixelFormatType_32BGRA == pix_fmt) {
+    printf("> kCVPixelFormatType_32BGRA.\n");
+  }
+#endif
+
+#if 0
   CVImageBufferRef img_ref = CMSampleBufferGetImageBuffer(sampleBuffer);
   CVPixelBufferLockBaseAddress(img_ref, 0);
   void* base_address = CVPixelBufferGetBaseAddress(img_ref);
@@ -282,6 +376,7 @@
   }
 
   CVPixelBufferUnlockBaseAddress(img_ref, 0);
+#endif
 
 #if 0
   // Some debug info.
@@ -347,7 +442,9 @@
       ca::Capability cap;
       
       if ([fps minFrameRate] != [fps maxFrameRate]) {
-        printf("@todo -  Need to handle a capability with different min/max framerates. This works but need more testing.\n");
+#if !defined(NDEBUG)        
+        printf("@todo -  Need to handle a capability with different min/max framerates. This works but need more testing. min framerate: %f, max framerate: %f\n", (float)[fps minFrameRate], (float)[fps maxFrameRate]);
+#endif
         cap.fps = ca::fps_from_rational((uint64_t)1, (uint64_t) [fps maxFrameRate]);
       }
       else {
@@ -367,6 +464,7 @@
 
       ++fps_dx;	
     }
+
     fmt_dx++;
   }
  
@@ -413,11 +511,24 @@
 
 // Convert a pixel format type to a videocapture type
 - (int) getCapturePixelFormat: (CMPixelFormatType) ref {
+
   switch(ref) {
-    case kCMPixelFormat_422YpCbCr8:                return CA_UYVY422;
-    case kCMPixelFormat_422YpCbCr8_yuvs:           return CA_YUYV422; 
-    case kCMVideoCodecType_JPEG_OpenDML:           return CA_JPEG_OPENDML;
-    default: return CA_NONE;
+
+    case kCVPixelFormatType_422YpCbCr8:                   { return CA_UYVY422;        } // Cb Y0 Cr Y1
+    case kCVPixelFormatType_422YpCbCr8_yuvs:              { return CA_YUYV422;        } // Y0 Cb Y1 Cr  
+    case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: { return CA_YUV420BP;       }
+    case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:  { return CA_YUVJ420BP;      }
+    case kCVPixelFormatType_32ARGB:                       { return CA_ARGB32;         }
+    case kCVPixelFormatType_32BGRA:                       { return CA_BGRA32;         }
+    case kCMVideoCodecType_JPEG_OpenDML:                  { return CA_JPEG_OPENDML;   }
+
+    default: {
+      NSNumber* pixnum = [NSNumber numberWithInt: ref];
+      std::string type = [self cvPixelFormatToString:pixnum];
+      [pixnum release];
+      printf("Unknown and unhandled pixel format type: %u, %s\n", (unsigned int)ref, type.c_str());
+      return CA_NONE;
+    }
   };
 }
 
@@ -425,7 +536,16 @@
 /* -------------------------------------- */
 
 - (NSString* const) widthHeightToCaptureSessionPreset:(int) w andHeight:(int) h {
-
+#if TARGET_OS_IPHONE
+  if (w == 352 && h == 288) { return AVCaptureSessionPreset352x288; }  /* iPhone 5.0+ */
+  else if (w == 640 && h == 480) { return AVCaptureSessionPreset640x480; } /* iPhone 4.0+ */
+  else if (w == 1280 && h == 720) { return AVCaptureSessionPreset1280x720; } /* iPhone 4.0+ */
+  else if (w == 1920 && h == 1080) { return AVCaptureSessionPreset1920x1080; } /* iPhone 5.0+ */
+  else if (w == 960 && h == 540) { return AVCaptureSessionPresetiFrame960x540; } /* iPhone 5.0+ */
+  else {
+    return AVCaptureSessionPresetHigh;
+  }
+#else
   if(w == 320 && h == 240) { return AVCaptureSessionPreset320x240; }
   else if(w == 352 && h == 288) { return AVCaptureSessionPreset352x288; } 
   else if(w == 640 && h == 480) { return AVCaptureSessionPreset640x480; }
@@ -434,6 +554,7 @@
   else {
     return AVCaptureSessionPresetHigh; // if no preset matches we return the highest
   }
+#endif
 }
 
 - (void) printSupportedPixelFormatsByVideoDataOutput: (AVCaptureVideoDataOutput*) o {

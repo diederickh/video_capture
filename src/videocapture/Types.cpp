@@ -2,10 +2,36 @@
 
 namespace ca { 
 
+  /* PIXELBUFFER */
+  /* -------------------------------------- */
+  PixelBuffer::PixelBuffer() {
+    nbytes = 0;
+    stride[0] = 0;
+    stride[1] = 0;
+    stride[2] = 0;
+    plane[0] = NULL;
+    plane[1] = NULL;
+    plane[2] = NULL;
+    width[0] = 0;
+    width[1] = 0;
+    width[2] = 0;
+    height[0] = 0;
+    height[1] = 0;
+    height[2] = 0;
+    user = NULL;
+  }
+   
   /* CAPABILITY */
   /* -------------------------------------- */
   Capability::Capability() {
     clear();
+  }
+
+  Capability::Capability(int w, int h, int pixfmt) {
+    clear();
+    width = w;
+    height = h;
+    pixel_format = pixfmt;
   }
 
   Capability::~Capability() {
@@ -92,13 +118,19 @@ namespace ca {
     clear();
 
     if(fmt == CA_YUYV422) {
-
       width.push_back(w / 2);
       height.push_back(h);
       stride.push_back(w / 2);
       nbytes.push_back(w * h * 2);
       offset.push_back(0);
-
+      return 1;
+    }
+    else if (fmt == CA_UYVY422) {
+      width.push_back(w / 2);
+      height.push_back(h);
+      stride.push_back(w / 2);
+      nbytes.push_back(w * h * 2);
+      offset.push_back(0);
       return 1;
     }
     else if(fmt == CA_YUV420P) {
