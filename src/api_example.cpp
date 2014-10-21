@@ -21,7 +21,7 @@
 #include <fstream>
 #include <videocapture/Capture.h>
 
-#define WRITE_RAW_FILE 1
+#define WRITE_RAW_FILE 0
 
 #if WRITE_RAW_FILE
 bool wrote_frame = false;
@@ -32,7 +32,7 @@ using namespace ca;
 
 bool must_run = true;
 
-void fcallback(void* pixels, int nbytes, void* user);
+void fcallback(PixelBuffer& buffer); 
 void sig_handler(int sig);
 
 int main() {
@@ -59,13 +59,12 @@ int main() {
   Capture cap(fcallback, NULL); // , CA_DECKLINK);
   cap.listDevices();
   cap.listOutputFormats();
-  cap.listCapabilities(cfg.device);
+  //  cap.listCapabilities(cfg.device);
 
-  return 0;
 
   std::vector<Capability> caps;
-  //  caps.push_back(Capability(width, height, CA_YUYV422));
-  caps.push_back(Capability(width, height, CA_UYVY422));
+  caps.push_back(Capability(width, height, CA_YUYV422));
+  //caps.push_back(Capability(width, height, CA_UYVY422));
   //caps.push_back(Capability(width, height, CA_YUV420P));
   cfg.capability = cap.findCapability(cfg.device, caps);
   if (cfg.capability > 0) {
@@ -117,11 +116,13 @@ int main() {
   return EXIT_SUCCESS;
 }
 
-  void fcallback(void* pixels, int nbytes, void* user) {
-  printf("Frame callback: %d bytes\n", nbytes);
+void fcallback(PixelBuffer& buffer) { 
+
+  printf("Frame callback: %lu bytes, stride: %lu \n", buffer.nbytes, buffer.stride[0]);
+
 #if WRITE_RAW_FILE
   if (false == wrote_frame) {
-    outfile.write((const char*)pixels, nbytes);
+    outfile.write((const char*)buffer.plane[0], buffer.nbytes);
     wrote_frame = true;
   }
 #endif

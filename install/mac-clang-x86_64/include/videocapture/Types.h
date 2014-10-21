@@ -68,7 +68,24 @@
  
 namespace ca {
 
-  typedef void(*frame_callback)(void* pixels, int nbytes, void* user);
+
+  class PixelBuffer;
+  //typedef void(*frame_callback)(void* pixels, int nbytes, void* user);
+  typedef void(*frame_callback)(PixelBuffer& buffer);
+
+  /* -------------------------------------- */
+
+  class PixelBuffer {
+  public:
+    PixelBuffer();
+  public:
+    uint8_t* plane[3];
+    size_t stride[3];
+    size_t width[3];
+    size_t height[3];
+    size_t nbytes;
+    void* user;
+  };
 
   /* -------------------------------------- */
 

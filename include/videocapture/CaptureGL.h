@@ -263,7 +263,7 @@ static const char* CAPTURE_GL_YUV420P_GENERIC_FS = ""
 
 namespace ca {
 
-  void capturegl_on_frame(void* pixels, int nbytes, void* user);                      /* Is called whenever a frame is received from the capture device */
+  void capturegl_on_frame(PixelBuffer& buffer);                                       /* Is called whenever a frame is received from the capture device */
   GLuint capturegl_create_shader(GLenum type, const char* source);                    /* Creates a shader for the given type. */
   
   class CaptureGL {
@@ -403,16 +403,16 @@ namespace ca {
 
   /* -------------------------------------- */
 
-  void capturegl_on_frame(void* pixels, int nbytes, void* user) {
+  void capturegl_on_frame(PixelBuffer& pixbuf) { 
 
-    if(nbytes == 0 || pixels == NULL) {
+    if(pixbuf.nbytes == 0) {
       return;
     }
 
-    CaptureGL* gl = static_cast<CaptureGL*>(user);
+    CaptureGL* gl = static_cast<CaptureGL*>(pixbuf.user);
 
     if(gl->fmt == CA_YUYV422 || gl->fmt == CA_UYVY422 || gl->fmt == CA_YUV420P) {
-      memcpy((char*)gl->pixels, (char*)pixels, nbytes);
+      memcpy((char*)gl->pixels, (char*)pixbuf.plane[0], pixbuf.nbytes);
       gl->needs_update = true;
     }
     else {

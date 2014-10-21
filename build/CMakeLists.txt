@@ -99,6 +99,9 @@ if(APPLE)
     ${sd}/videocapture/mac/AVFoundation_Implementation.mm
     )
 
+  find_library(fr_appkit AppKit)
+  find_library(fr_core_graphics CoreGraphics)
+  find_library(fr_foundation Foundation)
   find_library(fr_core_foundation CoreFoundation)
   find_library(fr_avfoundation AVFoundation)
   find_library(fr_core_video CoreVideo)
@@ -109,6 +112,9 @@ if(APPLE)
     ${fr_avfoundation}
     ${fr_core_video}
     ${fr_core_media}
+    ${fr_foundation}
+    ${fr_core_graphics}
+    ${fr_appkit}
     )
 
   if (NOT USE_IOS)
@@ -118,7 +124,7 @@ if(APPLE)
       )
   endif()
 
-  if(USE_OPENGL AND NOT USE_IOS)
+  if(USE_OPENGL)
 
     find_library(fr_opengl OpenGL)
     find_library(fr_iokit IOKit)

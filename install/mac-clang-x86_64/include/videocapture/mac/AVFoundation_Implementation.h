@@ -16,12 +16,14 @@
   can convert this into YUV422 for you. 
 
  */
+#include <TargetConditionals.h>
 #include <videocapture/Types.h>
 #include <videocapture/Utils.h>
 #include <vector>
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
+
 
 // resource: https://webrtc.googlecode.com/svn/trunk/webrtc/modules/video_capture/ios/video_capture_ios_objc.mm
 // resource: https://developer.apple.com/library/ios/documentation/AudioVideo/Conceptual/AVFoundationPG/AVFoundationPG.pdf
@@ -31,6 +33,9 @@
   AVCaptureSession* session;                                                                  /* Manages the state of the input device. */
   AVCaptureDeviceInput* input;                                                                /* Concrete instance of `AVDeviceInput`,  represents the input device (webcam). */
   AVCaptureVideoDataOutput* output;                                                           /* Concrete instance of `AVDeviceOutput`, used to get the video frames. */
+  int pixel_format;                                                                           /* The pixel format in which we're capturing, is used in the callback to fill the PixelBuffer. This is a VideoCapture pixel format as defined in Types.h */
+  int is_pixel_buffer_set;                                                                    /* Some information of the `pixel_buffer` member can only be set in the frame callback, but we don't want to set it every time we get a new frame, this flag is used for that. */
+  ca::PixelBuffer pixel_buffer;                                                               /* The pixel buffer that is filled/set and pass to the capture callback. */
   ca::frame_callback cb_frame;                                                                /* Gets called when we receive a new frame. */
   void* cb_user;                                                                              /* User data that's will be passed into `cb_frame()` */
 }

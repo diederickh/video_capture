@@ -2,6 +2,25 @@
 
 namespace ca { 
 
+  /* PIXELBUFFER */
+  /* -------------------------------------- */
+  PixelBuffer::PixelBuffer() {
+    nbytes = 0;
+    stride[0] = 0;
+    stride[1] = 0;
+    stride[2] = 0;
+    plane[0] = NULL;
+    plane[1] = NULL;
+    plane[2] = NULL;
+    width[0] = 0;
+    width[1] = 0;
+    width[2] = 0;
+    height[0] = 0;
+    height[1] = 0;
+    height[2] = 0;
+    user = NULL;
+  }
+   
   /* CAPABILITY */
   /* -------------------------------------- */
   Capability::Capability() {
