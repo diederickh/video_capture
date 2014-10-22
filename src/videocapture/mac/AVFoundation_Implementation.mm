@@ -146,7 +146,6 @@
     if(settings.format != CA_NONE) {
       assert(formats.size() > 0);
       fmt_type = [self captureFormatToCvPixelFormat: cap.pixel_format]; 
-      
     }
     else {
       fmt_type = [self captureFormatToCvPixelFormat: formats[0].format];
@@ -404,7 +403,6 @@
   else if (av_fmt == kCVPixelFormatType_32BGRA) {
     printf("> kCVPixelFormatType_32BGRA.\n");
   }
-
 #endif
 
 }
