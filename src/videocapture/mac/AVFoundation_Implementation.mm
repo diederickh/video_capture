@@ -139,7 +139,7 @@
     }
 
     // Configure output
-    CMPixelFormatType fmt_type = nil;
+    CMPixelFormatType fmt_type ;
     std::vector<ca::Format> formats;
     [self getOutputFormats: formats];
 
