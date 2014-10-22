@@ -166,7 +166,7 @@
     int cv_fmt = (int)CMFormatDescriptionGetMediaSubType([[cap_device activeFormat] formatDescription]);
     NSNumber* cv_fmt_num = [NSNumber numberWithInt: cv_fmt];
     pixel_format = [self cvPixelFormatToCaptureFormat: cv_fmt_num];
-    [cv_fmt_num release];
+
     if (pixel_format == CA_NONE) {
       printf("Error: failed to find the capture pixel format for the currently used cvPixel format.\n");
       exit(EXIT_FAILURE);
@@ -185,6 +185,7 @@
 
     dispatch_release(queue);
     [session addOutput:output]; 
+
   }
 
   [session commitConfiguration];
@@ -286,7 +287,7 @@
  didOutputSampleBuffer: (CMSampleBufferRef) sampleBuffer
         fromConnection: (AVCaptureConnection*) connection 
 {
-  
+
   if (nil == cb_frame) {
     printf("Error: capturing frames but the `cb_frame` callback is not set, not supposed to happen. Stopping\n");
     exit(EXIT_FAILURE);
@@ -311,6 +312,13 @@
         pixel_buffer.height[i] = CVPixelBufferGetHeightOfPlane(buffer, i);
         pixel_buffer.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
         pixel_buffer.nbytes += pixel_buffer.stride[i] * pixel_buffer.height[i];
+
+      printf("width: %lu, height: %lu, stride: %lu, nbytes: %lu, plane_count: %lu\n", 
+             pixel_buffer.width[i],
+             pixel_buffer.height[i],
+             pixel_buffer.stride[i],
+             pixel_buffer.nbytes,
+             plane_count);
       }
     }
     else {
@@ -318,6 +326,7 @@
       pixel_buffer.height[0] = CVPixelBufferGetHeight(buffer);
       pixel_buffer.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
       pixel_buffer.nbytes = pixel_buffer.stride[0] * pixel_buffer.height[0];
+
     }
     is_pixel_buffer_set = 1;
   }
@@ -331,12 +340,14 @@
     {
       pixel_buffer.plane[0] = (uint8_t*)CVPixelBufferGetBaseAddress(buffer);
     }
-    else if (CA_YUVJ420BP == pixel_format) { /* kCVPixelFormatType_420YpCbCr8BiPlanarFullRange */
+    else if (CA_YUVJ420BP == pixel_format    /* kCVPixelFormatType_420YpCbCr8BiPlanarFullRange */
+             || CA_YUV420BP == pixel_format) /* kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange */
+    {
       pixel_buffer.plane[0] = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(buffer, 0);
       pixel_buffer.plane[1] = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(buffer, 1);
     }
     else {
-      printf("Error: unhandled and unknown pixel format: %d", pixel_format);
+      printf("Error: unhandled or unknown pixel format: %d.\n", pixel_format);
     }
 
     cb_frame(pixel_buffer);
