@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <stdint.h>
 
 /* General */
 #define CA_NONE -1
@@ -78,8 +79,10 @@ namespace ca {
   class PixelBuffer {
   public:
     PixelBuffer();
+
   public:
-    uint8_t* plane[3];
+    uint8_t* pixels;                                                                /* When data is one continuous block of member you can use this, otherwise it points to the same location as plane[0]. */
+    uint8_t* plane[3];                                                              /* Pointers to the pixel data; when we're a planar format all members are set, if packets only plane[0] */
     size_t stride[3];
     size_t width[3];
     size_t height[3];

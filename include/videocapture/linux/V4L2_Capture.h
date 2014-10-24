@@ -73,7 +73,7 @@ namespace ca {
     int state;                                                                          /* We keep track of the open/capture state so we know when to stop/close the device */
     int capture_device_fd;                                                              /* File descriptor for the capture device. */
     std::vector<V4L2_Buffer*> buffers;                                                  /* The buffer that are used to store the frames from the capture device . */                                      
-    
+    PixelBuffer pixel_buffer;                                                           /* The object we pass to the callback. */
   };
 }; // namespace ca
 

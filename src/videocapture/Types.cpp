@@ -5,6 +5,7 @@ namespace ca {
   /* PIXELBUFFER */
   /* -------------------------------------- */
   PixelBuffer::PixelBuffer() {
+    pixels = NULL;
     nbytes = 0;
     stride[0] = 0;
     stride[1] = 0;

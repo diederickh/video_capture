@@ -21,6 +21,7 @@ namespace ca {
     ,state(CA_STATE_NONE)
     ,capture_device_fd(-1)
   {
+    pixel_buffer.user = user;
   }
 
   V4L2_Capture::~V4L2_Capture() {
@@ -35,6 +36,7 @@ namespace ca {
 
     state = CA_STATE_NONE;
     capture_device_fd = -1;
+    pixel_buffer.user = NULL;
   }
 
   int V4L2_Capture::open(Settings settings) {
@@ -260,7 +262,10 @@ namespace ca {
     assert(buf.index < buffers.size());
 
     if(cb_frame) {
-      cb_frame(buffers[buf.index]->start, buf.bytesused, cb_user);
+      pixel_buffer.pixels = (uint8_t*)buffers[buf.index]->start;
+      pixel_buffer.plane[0] = pixel_buffer.pixels;
+      pixel_buffer.nbytes = buf.bytesused;
+      cb_frame(pixel_buffer);
     }
 
     if(v4l2_ioctl(capture_device_fd, VIDIOC_QBUF, &buf) == -1) {

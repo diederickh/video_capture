@@ -30,8 +30,7 @@ message(STATUS "USE_OPENGL: ${USE_OPENGL}")
 message(STATUS "USE_DECKLINK: ${USE_DECKLINK}")
 
 
-if (USE_IOS) 
-
+if (APPLE AND USE_IOS) 
   option(USE_IOS_DEVICE "Build an iOS library for a iPhone" On)
 
   if (USE_IOS_SIMULATOR)
