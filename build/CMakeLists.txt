@@ -19,10 +19,10 @@ project(videocapture)
 
 include(ExternalProject)
 
-option(USE_IOS "Build an iOS library" ON)
-option(USE_IOS_SIMULATOR "Build for the iOS simulator." OFF)
-option(USE_OPENGL "Create OpenGL examples" OFF)
-option(USE_DECKLINK "Use Decklink capture card." OFF)
+option(USE_IOS "Build an iOS library" Off)
+option(USE_IOS_SIMULATOR "Build for the iOS simulator." Off)
+option(USE_OPENGL "Create OpenGL examples" Off)
+option(USE_DECKLINK "Use Decklink capture card." Off)
 
 message(STATUS "USE_IOS: ${USE_IOS}")
 message(STATUS "USE_IOS_SIMULATOR: ${USE_IOS_SIMULATOR}")
@@ -32,7 +32,7 @@ message(STATUS "USE_DECKLINK: ${USE_DECKLINK}")
 
 if (USE_IOS) 
 
-  option(USE_IOS_DEVICE "Build an iOS library for a iPhone" ON)
+  option(USE_IOS_DEVICE "Build an iOS library for a iPhone" On)
 
   if (USE_IOS_SIMULATOR)
     set(ios_sysroot "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/")

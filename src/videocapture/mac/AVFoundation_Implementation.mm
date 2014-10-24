@@ -139,7 +139,7 @@
     }
 
     // Configure output
-    CMPixelFormatType fmt_type ;
+    CMPixelFormatType fmt_type;
     std::vector<ca::Format> formats;
     [self getOutputFormats: formats];
 
@@ -536,7 +536,6 @@
     default: {
       NSNumber* pixnum = [NSNumber numberWithInt: ref];
       std::string type = [self cvPixelFormatToString:pixnum];
-      [pixnum release];
       printf("Unknown and unhandled pixel format type: %u, %s\n", (unsigned int)ref, type.c_str());
       return CA_NONE;
     }
