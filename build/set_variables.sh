@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -x
 d=${PWD}
 
@@ -35,29 +35,4 @@ if [ ! -d ${d}/sources ] ; then
         ./build_win_dependencies.sh
     fi
 fi
-
-cd build.release
-
-cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DUSE_OPENGL=OFF \
-    -DUSE_IOS=ON \
-    -DEXTERN_LIB_DIR=${extern_path}/lib \
-    -DEXTERN_INC_DIR=${extern_path}/include \
-    -DEXTERN_SRC_DIR=${extern_path}/src \
-    -DTINYLIB_DIR=${d}/sources/tinylib/ \
-    -DCMAKE_INSTALL_PREFIX=${install_path} \
-    ../
-
-cmake --build . --target install --config Release
-
-cd ${install_path}/bin
-#./videocapture
-#./opengl_example
-#./easy_opengl_example
-#./api_example
-#./easy_opengl_example
-#./api_example
-#./decklink_example
-
 
