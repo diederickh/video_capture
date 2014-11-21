@@ -60,6 +60,7 @@ namespace ca {
     int setReaderFormat(IMFSourceReader* reader, Capability& cap);                      /* Set the format for the source reader. The source reader is used to process raw data, see: http://msdn.microsoft.com/en-us/library/windows/desktop/dd940436(v=vs.85).aspx for more information */
 
   public:
+    PixelBuffer pixel_buffer;                                                           /* This is the pixel buffer that is passed on to the frame callback. */
     MediaFoundation_Callback* mf_callback;                                              /* The MediaFoundation_Callback instance that will receive frame data */
     IMFMediaSource* imf_media_source;                                                   /* The IMFMediaSource represents the capture device. */
     IMFSourceReader* imf_source_reader;                                                 /* The IMFSourceReader is an intermediate that must be used to process raw video frames */

@@ -44,6 +44,8 @@ namespace ca {
     
     // Shutdown COM
     CoUninitialize();
+
+    pixel_buffer.user = NULL;
   }
 
   int MediaFoundation_Capture::open(Settings settings) {
@@ -107,6 +109,16 @@ namespace ca {
       safeReleaseMediaFoundation(&imf_media_source);
       return -9;
     }
+
+    /* Set the pixel buffer strides, widths and heights based on the selected format. */
+    if (0 != pixel_buffer.setup(cap.width, cap.height, cap.pixel_format)) {
+      printf("Error: cannot setup the pixel buffer for the current pixel format.\n");
+      safeReleaseMediaFoundation(&mf_callback);
+      safeReleaseMediaFoundation(&imf_media_source);
+      return -10;
+    }
+
+    pixel_buffer.user = cb_user;
 
     state |= CA_STATE_OPENED;
 
@@ -416,7 +428,7 @@ namespace ca {
         }
         PropVariantClear(&var);
       
-        // When the output media type of the source reader  matches our specs, set it!
+        // When the output media type of the source reader matches our specs, set it!
         if(match_cap.width == cap.width
            && match_cap.height == cap.height
            && match_cap.pixel_format == cap.pixel_format) 

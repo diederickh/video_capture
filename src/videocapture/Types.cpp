@@ -19,9 +19,62 @@ namespace ca {
     height[0] = 0;
     height[1] = 0;
     height[2] = 0;
+    offset[0] = 0;
+    offset[1] = 0;
+    offset[2] = 0;
     user = NULL;
   }
    
+  int PixelBuffer::setup(int w, int h, int fmt) {
+
+    if (0 == w || 0 == h) {
+      printf("error: cannot setup pixel buffer because w or h is 0.\n");
+      return -1;
+    }
+    
+    width[0] = w;
+    height[0] = h;
+
+    switch (fmt) {
+
+      case CA_YUV420P: {
+        stride[0] = w;
+        stride[1] = w / 2;
+        stride[2] = w / 2;
+
+        width[0] = w;
+        width[1] = w / 2;
+        width[2] = w / 2;
+
+        height[0] = h;
+        height[1] = h / 2;
+        height[2] = h / 2;
+
+        offset[0] = 0;
+        offset[1] = (size_t)(w * h);
+        offset[2] = (size_t)(offset[1] + (w / 2) * (h / 2));
+
+        break;
+      }
+        /*
+      case CA_YUYV422: 
+      case CA_UYVY422: {
+        stride[0] = w;
+        stride[1] = w / 2;
+        stride[2] = w / 2;
+        break;
+      }
+        */
+
+      default: {
+        printf("error: cannot setup the PixelBuffer for the given fmt: %d\n", fmt);
+        return -2;
+      }
+    }
+
+    return 0;
+  }
+
   /* CAPABILITY */
   /* -------------------------------------- */
   Capability::Capability() {

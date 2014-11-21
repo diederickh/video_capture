@@ -79,6 +79,7 @@ namespace ca {
   class PixelBuffer {
   public:
     PixelBuffer();
+    int setup(int w, int h, int fmt);                                              /* Set the strides, widths, heights, nbyte values for the given pixel format (CA_UYVY422, CA_YUV420P etc..) and video frame size.. Returns 0 on success otherwise < 0. */
 
   public:
     uint8_t* pixels;                                                                /* When data is one continuous block of member you can use this, otherwise it points to the same location as plane[0]. */
@@ -86,6 +87,7 @@ namespace ca {
     size_t stride[3];
     size_t width[3];
     size_t height[3];
+    size_t offset[3];                                                               /* When the data is planar but packed, these contains the byte offsets from the first byte / plane. e.g. you can use this with YUV420P. */ 
     size_t nbytes;
     void* user;
   };

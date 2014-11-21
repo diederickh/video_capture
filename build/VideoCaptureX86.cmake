@@ -122,6 +122,10 @@ endif()
 
 if(WIN32)
 
+   add_definitions(
+     -DPA_WDMKS_NO_KSGUID_LIB 
+     )
+
   include_directories(${windows_sdk_dir}/Include)
 
   list(APPEND videocapture_sources

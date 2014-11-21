@@ -77,7 +77,13 @@ namespace ca {
           DWORD max_length = 0;
           BYTE* data = NULL;
           buffer->Lock(&data, &max_length, &length);
-          cap->cb_frame((void*)data, length, cap->cb_user);
+          
+          cap->pixel_buffer.nbytes = (size_t)length;
+          cap->pixel_buffer.plane[0] = data;
+          cap->pixel_buffer.plane[1] = data + cap->pixel_buffer.offset[1];
+          cap->pixel_buffer.plane[2] = data + cap->pixel_buffer.offset[2];
+          cap->cb_frame(cap->pixel_buffer);
+
           buffer->Unlock();
           buffer->Release();
         }
