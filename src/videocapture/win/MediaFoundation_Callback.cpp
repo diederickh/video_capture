@@ -70,7 +70,9 @@ namespace ca {
       sample->GetBufferCount(&count);
 
       for(DWORD i = 0; i < count; ++i) {
+
         hr = sample->GetBufferByIndex(i, &buffer);
+
         if(SUCCEEDED(hr)) {
        
           DWORD length = 0;
