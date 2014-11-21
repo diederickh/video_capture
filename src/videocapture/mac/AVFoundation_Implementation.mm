@@ -313,6 +313,7 @@
         pixel_buffer.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
         pixel_buffer.nbytes += pixel_buffer.stride[i] * pixel_buffer.height[i];
 
+
       printf("width: %lu, height: %lu, stride: %lu, nbytes: %lu, plane_count: %lu\n", 
              pixel_buffer.width[i],
              pixel_buffer.height[i],
@@ -326,7 +327,6 @@
       pixel_buffer.height[0] = CVPixelBufferGetHeight(buffer);
       pixel_buffer.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
       pixel_buffer.nbytes = pixel_buffer.stride[0] * pixel_buffer.height[0];
-
     }
     is_pixel_buffer_set = 1;
   }
