@@ -25,13 +25,13 @@ cmake --build . --target install --config Release
 
 cd ${install_path}/bin
 
-./easy_opengl_example
+#./easy_opengl_example
 
 #./videocapture
 #./opengl_example
 #./api_example
-#./easy_opengl_example
-#./api_example
+./easy_opengl_example
 #./decklink_example
+#./test_conversion
 
 

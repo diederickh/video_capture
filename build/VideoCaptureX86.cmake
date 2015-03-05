@@ -209,6 +209,10 @@ if (NOT USE_IOS)
   add_executable(api_example ${sd}/api_example.cpp)
   target_link_libraries(api_example ${videocapture_libraries} videocapture)
   install(TARGETS api_example RUNTIME DESTINATION bin)
+
+  add_executable(test_conversion ${sd}/test_conversion.cpp)
+  target_link_libraries(test_conversion ${videocapture_libraries} videocapture)
+  install(TARGETS test_conversion RUNTIME DESTINATION bin)
 endif()
 
 

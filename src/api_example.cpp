@@ -51,20 +51,26 @@ int main() {
   int width = 640;
   int height = 480;
 
+  width = 1280;
+  height = 720;
+
   Settings cfg;
   cfg.device = 1;
   cfg.capability = 0;
-  cfg.format = 0;
+  cfg.format = CA_NONE;
 
   Capture cap(fcallback, NULL); // , CA_DECKLINK);
   cap.listDevices();
+
+  printf("\nOutput formats:\n");
   cap.listOutputFormats();
   //  cap.listCapabilities(cfg.device);
 
-
   std::vector<Capability> caps;
   caps.push_back(Capability(width, height, CA_YUYV422));
-  //caps.push_back(Capability(width, height, CA_UYVY422));
+  caps.push_back(Capability(width, height, CA_UYVY422));
+  caps.push_back(Capability(width, height, CA_JPEG_OPENDML));
+
   //caps.push_back(Capability(width, height, CA_YUV420P));
   cfg.capability = cap.findCapability(cfg.device, caps);
   if (cfg.capability > 0) {
@@ -72,10 +78,11 @@ int main() {
   }
   else {
     printf("Could not find any of the given capabilities.\n");
+    cap.listCapabilities(cfg.device);
   }
 
-  int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
-  cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 3);
+  int fmts[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P, CA_JPEG_OPENDML }; 
+  cfg.capability = cap.findCapability(cfg.device, width, height, fmts, 4);
   if (!cfg.capability) {
     printf("Error: tried CA_YUYV422 and CA_UYVY formats; both didn't work.");
     ::exit(EXIT_FAILURE);

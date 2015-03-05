@@ -48,6 +48,7 @@ namespace ca {
     void update();
 
     /* Capabilities */
+    int getOutputFormat();                                                              /* When you've opened the capture device this function will return the pixel format that is used for the buffers that are passed into the callback. Some SDKs support conversion of compressed formats to e.g. YUY* pixel formats. */
     std::vector<Capability> getCapabilities(int device);
     std::vector<Device> getDevices();
     std::vector<Format> getOutputFormats();

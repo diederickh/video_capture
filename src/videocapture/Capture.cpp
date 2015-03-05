@@ -88,7 +88,12 @@ namespace ca {
   std::vector<Format> Capture::getOutputFormats() {
     assert(cap != NULL);
     return cap->getOutputFormats();
-  } 
+  }
+
+  int Capture::getOutputFormat() {
+    assert(cap != NULL);
+    return cap->getOutputFormat();
+  }
 
   int Capture::listDevices() {
     assert(cap != NULL);

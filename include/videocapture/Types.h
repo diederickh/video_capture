@@ -152,7 +152,7 @@ namespace ca {
   public: 
     int capability;                                                                 /* Number of the capability you want to use. See listCapabilities(). */
     int device;                                                                     /* Number of the device you want to use. See listDevices(). */
-    int format;                                                                     /* Number of the output format you want to use. See listOutputFormats(). */
+    int format;                                                                     /* The output format, e.g. CA_YUV422. This can be used when the capture SDK supports automatic conversion (mac/win). Some cameras capture in JPEG/H264 and the SDK can convert this to e.g. CA_YUYV422. Set the format here */
   };
 
   /* -------------------------------------- */

@@ -50,6 +50,7 @@
 - (int) getDevices: (std::vector<ca::Device>&) result;                                         /* Get a list with all the found capture devices. */
 - (int) getCapabilities: (std::vector<ca::Capability>&) result forDevice: (int) dev;           /* Get the capabilities for the given device. */
 - (int) getOutputFormats: (std::vector<ca::Format>&) result;                                   /* Get the output formats into which we can automaticaly convert the raw frames we receive from the webcam */
+- (int) getOutputFormat;                                                                       /* Get the output format that is used. The captured buffers are using this format. */
 - (AVCaptureDevice*) getCaptureDevice: (int) device;                                           /* Get a specific capture device (represents a webcam for example). */
 - (int) getCapturePixelFormat: (CMPixelFormatType) ref;                                        /* Converts the given CMPixelFormat to one which is used by the VideoCapture library */
 - (void) printSupportedPixelFormatsByVideoDataOutput: (AVCaptureVideoDataOutput*) o;           /* Used for debugging. Shows a list of supported PixelFormats by the output object */

@@ -54,8 +54,8 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   
   GLFWwindow* win = NULL;
-  int w = 1024;
-  int h = 768;
+  int w = 1280;
+  int h = 720;
 
   win = glfwCreateWindow(w, h, "Capture", NULL, NULL);
   if(!win) {
@@ -83,13 +83,24 @@ int main() {
   CaptureGL capture; 
 
   capture.cap.listDevices();
-  capture.cap.listCapabilities(0);
 
-#define USE_CAPABILITY 0
+
+#define USE_CAPABILITY 1
 #if USE_CAPABILITY
   Settings cfg;
-  cfg.device = 0;
-  cfg.capability = 12;
+  cfg.device = 1;
+  cfg.format = CA_UYVY422;
+
+  capture.cap.listCapabilities(cfg.device);
+
+  cfg.capability = capture.findCapability(cfg.device, w, h, CA_JPEG_OPENDML);
+  // cfg.capability = 92;
+  //cfg.capability = capture.findCapability(cfg.device, w, h, CA_UYVY422);
+  if (cfg.capability < 0) {
+    printf("Error: failed to find a capability.\n");
+    exit(EXIT_FAILURE);
+  }
+  //cfg.capability = 12;
 
   if (capture.open(cfg) < 0) {
     printf("Error: cannot open using the given capability.\n");

@@ -1,6 +1,8 @@
 /* -*-C-*- */
 #import <videocapture/mac/AVFoundation_Implementation.h>
 
+static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
+
 @implementation AVFoundation_Implementation 
 
 // Initializes the capturer
@@ -45,7 +47,7 @@
 
      @todo Mac supports automatical conversion of pixel formats. For example,
      the Logitech C920 cam, supports CA_YUYV422 but Mac can convert it to CA_UYVY422
-     using the output format object. At moment we only support capabilities that
+     using the output format object. At the moment we only support capabilities that
      are supported by the cam itself. 
 
    */
@@ -54,14 +56,14 @@
     return -2;
   }
   
-  // Get the capture device
+  /* Get the capture device */
   AVCaptureDevice* cap_device = [self getCaptureDevice: settings.device];
   if(cap_device == nil) {
     printf("Error: cannot find the given capture device: %d\n", settings.device);
     return -3;
   }
 
-  // Get the input device
+  /* Get the input device */
   NSError* err = nil;
   input = [AVCaptureDeviceInput deviceInputWithDevice: cap_device error:&err];
   if(input == nil) {
@@ -71,26 +73,26 @@
 
   [input retain];
 
-  // Create session
+  /* Create session */
   session = [[AVCaptureSession alloc] init];
   if(session == nil) {
     printf("Error: cannot create the capture session.\n");
     return -4;
   }
 
-  // Is set to the settings.capability values. */
+  /* Is set to the settings.capability values. */
   ca::Capability cap;
 
   [session beginConfiguration];
   {
 
-    // Get the capabilities for this device
+    /* Get the capabilities for this device */
     std::vector<ca::Capability> capabilities;
     [self getCapabilities: capabilities forDevice: settings.device];
     assert(capabilities.size() > 0);
     cap = capabilities[settings.capability];
 
-    // Get the best matching session preset.
+    /* Get the best matching session preset. */
     NSString* const preset = [self widthHeightToCaptureSessionPreset: cap.width andHeight: cap.height];
     if([session canSetSessionPreset: preset]) {
       session.sessionPreset = preset;
@@ -100,14 +102,15 @@
       return -5;
     }
 
-    // Add the input
+    /* Add the input */
     if([session canAddInput: input] == NO) {
       printf("Error: cannot add the device input to the session manager.\n");
       return -6;
     }
+    
     [session addInput:input];
 
-    // Set the AVCaptureDeviceFormat and minFrameDuration
+    /* Set the AVCaptureDeviceFormat and minFrameDuration */
     AVCaptureDeviceFormat* cap_format = [[cap_device formats] objectAtIndex: cap.pixel_format_index];
     AVFrameRateRange* fps = [[cap_format videoSupportedFrameRateRanges] objectAtIndex: cap.fps_index];
 
@@ -128,7 +131,7 @@
       return  -8;
     }
 
-    // Create the output handler (needed for getOutputFormats)
+    /* Create the output handler (needed for getOutputFormats) */
     if(output == nil) {
       output = [[AVCaptureVideoDataOutput alloc] init];
       if(!output) {
@@ -138,49 +141,53 @@
       [output retain];
     }
 
-    // Configure output
+    /* Configure output */
     CMPixelFormatType fmt_type;
     std::vector<ca::Format> formats;
     [self getOutputFormats: formats];
 
-    if(settings.format != CA_NONE) {
+    if(CA_NONE != settings.format) { 
       assert(formats.size() > 0);
-      fmt_type = [self captureFormatToCvPixelFormat: cap.pixel_format]; 
+      fmt_type = [self captureFormatToCvPixelFormat: settings.format]; 
     }
     else {
-      fmt_type = [self captureFormatToCvPixelFormat: formats[0].format];
+      fmt_type = [self captureFormatToCvPixelFormat: cap.pixel_format];
     }
-    
+
+    if (fmt_type == CA_NONE) {
+      printf("Error: failed to convert a Capture pixel format type (e.g. CA_YUYV422, CA_*) to a cvPixel format that we need to configure the Mac/iOS capturer.\n");
+      return -10;
+    }
+
     /* Tell the AVCaptureVideoDataOutput to convert the incoming data if necessary (and specify w/h) */
     [output setVideoSettings: [NSDictionary dictionaryWithObjectsAndKeys: 
-                                 [NSNumber numberWithInt:fmt_type], kCVPixelBufferPixelFormatTypeKey,
-                                 [NSNumber numberWithInteger:cap.width], (id)kCVPixelBufferWidthKey,
-                                 [NSNumber numberWithInteger:cap.height], (id)kCVPixelBufferHeightKey,
-                                 nil]];
+                               [NSNumber numberWithInt:fmt_type], kCVPixelBufferPixelFormatTypeKey,
+                               [NSNumber numberWithInteger:cap.width], (id)kCVPixelBufferWidthKey,
+                               [NSNumber numberWithInteger:cap.height], (id)kCVPixelBufferHeightKey,
+                               nil]];
 
     /* 
        Cache the currently used pixel format that is used to fill the PixelBuffer 
        that we pass to the callback. We retrieve the pixel format from the current
        device to make sure that we're getting the one which is actually used. 
     */
-    int cv_fmt = (int)CMFormatDescriptionGetMediaSubType([[cap_device activeFormat] formatDescription]);
-    NSNumber* cv_fmt_num = [NSNumber numberWithInt: cv_fmt];
-    pixel_format = [self cvPixelFormatToCaptureFormat: cv_fmt_num];
+    
+    pixel_format = [self getCapturePixelFormat: fmt_type];
 
     if (pixel_format == CA_NONE) {
       printf("Error: failed to find the capture pixel format for the currently used cvPixel format.\n");
-      exit(EXIT_FAILURE);
+      return -11;
     }
 
-    // Setup framegrabber callback
+    /* Setup framegrabber callback */
     dispatch_queue_t queue = dispatch_queue_create("Video Queue", DISPATCH_QUEUE_SERIAL);
     [output setSampleBufferDelegate:self queue:queue];
 
-    if([session canAddOutput:output] == NO) {
+    if ([session canAddOutput:output] == NO) {
       printf("Error: cannot add the given output.\n");
       dispatch_release(queue);
       [session commitConfiguration];
-      return -10;
+      return -12;
     }
 
     dispatch_release(queue);
@@ -193,7 +200,7 @@
   return 1;
 }
 
-// Close the device and shutdown the session.
+/* Close the device and shutdown the session. */
 - (int) closeDevice {
 
   if(output != nil) {
@@ -235,7 +242,7 @@
   return 1;
 }
 
-// Start the capture process.
+/* Start the capture process. */
 - (int) startCapture {
 
   if(session == nil) {
@@ -253,7 +260,7 @@
   return 1;
 }
 
-// Stop the capture process.
+/* Stop the capture process. */
 - (int) stopCapture {
 
   if(session == nil) {
@@ -275,14 +282,14 @@
   return 1;
 }
 
-// Set the frame callback.
+/* Set the frame callback. */
 - (void) setCallback: (ca::frame_callback) cb user: (void*) u {
   cb_frame = cb;
   cb_user = u;
   pixel_buffer.user = u;
 }
 
-// Capture callback.
+/* Capture callback. */
 - (void) captureOutput: (AVCaptureOutput*) captureOutput
  didOutputSampleBuffer: (CMSampleBufferRef) sampleBuffer
         fromConnection: (AVCaptureConnection*) connection 
@@ -293,14 +300,98 @@
     exit(EXIT_FAILURE);
   }
 
+  CMFormatDescriptionRef desc = CMSampleBufferGetFormatDescription(sampleBuffer);
+  FourCharCode fcc = CMFormatDescriptionGetMediaSubType(desc);
+
+#if 0  
+  printf("\nPrinting the received sampleBuffer format description.\n----------------------------------------------------------\n");
+  print_cmformatdescription_info(desc);
+
+  /* TMP */
+  printf("Printing the device active format description.\n----------------------------------------------------------\n");
+  CMFormatDescriptionRef ref = input.device.activeFormat.formatDescription;
+  print_cmformatdescription_info(ref);
+  /* END TMP */
+  printf("==================\n\n");
+#endif
+
+  /* ------------------------------------------------------------------------------------------ */
+  /* Compressed Formats                                                                         */
+  /* ------------------------------------------------------------------------------------------ */
+  
+  if (kCMVideoCodecType_JPEG_OpenDML == fcc) {
+
+    CMBlockBufferRef block_buffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+    if (NULL == block_buffer) {
+      printf("Error: failed to get access to the block buffer for JPEG data.\n");
+      return;
+    }
+
+    size_t len_at_offset = 0;
+    size_t total_length = 0;
+    char* data_pointer = NULL;
+    bool is_contiguous = false;
+    OSStatus status;
+    
+    status = CMBlockBufferGetDataPointer(block_buffer, 0, &len_at_offset, &total_length, &data_pointer);
+    
+    if (kCMBlockBufferNoErr != status) {
+      printf("Error: failed to get a pointer to the data pointer.\n");
+      return;
+    }
+
+    if (len_at_offset != total_length) {
+      printf("Error: the length at the offset of the data pointer is not the same as the total frame size. We're not handling this situation yet.\n");
+      return;
+    }
+
+    is_contiguous = CMBlockBufferIsRangeContiguous(block_buffer,  0, total_length);
+    if (false == is_contiguous) {
+      printf("Error: the received datablock is not contiguous which we expect it to be.\n");
+      return;
+    }
+
+    if (0 == is_pixel_buffer_set) {
+      CMFormatDescriptionRef desc = CMSampleBufferGetFormatDescription(sampleBuffer);
+      CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(desc);
+
+      pixel_buffer.width[0] = dims.width;
+      pixel_buffer.height[0] = dims.height;
+      pixel_buffer.stride[0] = 0; /* What should we store here? */
+      pixel_buffer.nbytes = total_length;
+
+      is_pixel_buffer_set = 1;
+    }
+
+    pixel_buffer.plane[0] = (uint8_t*)data_pointer;
+    
+    cb_frame(pixel_buffer);
+
+    return;
+  }
+
+  /* ------------------------------------------------------------------------------------------ */
+  /* Uncompressed Formats                                                                       */
+  /* ------------------------------------------------------------------------------------------ */
+  
   CVPixelBufferRef buffer = CMSampleBufferGetImageBuffer(sampleBuffer);  /* Note: CVImageBufferRef == CVPixelBufferRef, see: http://stackoverflow.com/questions/18660861/convert-cvimagebufferref-to-cvpixelbufferref */
   if (NULL == buffer) {
-    printf("Error: the returned CVImageBufferRef is NULL. Stopping.\n");
-    exit(EXIT_FAILURE);
+    CMFormatDescriptionRef desc = CMSampleBufferGetFormatDescription(sampleBuffer);
+    CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(desc);
+    CMMediaType media_type = CMFormatDescriptionGetMediaType(desc);
+    FourCharCode fcc = CMFormatDescriptionGetMediaSubType(desc);
+    char* fcc_ptr = (char*)&fcc;
+    printf("Error: the returned CVImageBufferRef is NULL. Stopping, sampleBuffer is %p.\n", sampleBuffer);
+    printf("Error: CMSampleBufferGetSampleSize() = %lu\n", CMSampleBufferGetTotalSampleSize(sampleBuffer));
+    printf("Error: CMVideoDimensions, width: %d, height: %d\n", dims.width, dims.height);
+    printf("Error: CMMediaType, is video: %c\n", media_type == kCMMediaType_Video ? 'y' : 'c');
+    printf("Error: FourCharCode: %c%c%c%c\n", fcc_ptr[3], fcc_ptr[2], fcc_ptr[1], fcc_ptr[1]);
+    return;
   }
 
   /* Fill the pixel_buffer member with some info that won't change per frame. */
-  if (0 == is_pixel_buffer_set) { 
+  if (0 == is_pixel_buffer_set) {
+
     if (true == CVPixelBufferIsPlanar(buffer)) {
       size_t plane_count = CVPixelBufferGetPlaneCount(buffer);
       if (plane_count > 3) {
@@ -313,8 +404,7 @@
         pixel_buffer.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
         pixel_buffer.nbytes += pixel_buffer.stride[i] * pixel_buffer.height[i];
 
-
-      printf("width: %lu, height: %lu, stride: %lu, nbytes: %lu, plane_count: %lu\n", 
+        printf("width: %lu, height: %lu, stride: %lu, nbytes: %lu, plane_count: %lu\n", 
              pixel_buffer.width[i],
              pixel_buffer.height[i],
              pixel_buffer.stride[i],
@@ -347,7 +437,9 @@
       pixel_buffer.plane[1] = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(buffer, 1);
     }
     else {
-      printf("Error: unhandled or unknown pixel format: %d.\n", pixel_format);
+      printf("Error: unhandled or unknown pixel format for the received buffer: %d.\n", pixel_format);
+      CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+      return;
     }
 
     cb_frame(pixel_buffer);
@@ -504,7 +596,20 @@
     c++;
   }
 
+  /* Lists the video codecs */
+#if 0
+  NSArray* codec_types = output.availableVideoCodecTypes;
+  for (NSString* fmt in codec_types) {
+    NSLog(@"%@", fmt);
+  }
+#endif
+  
   return (int) result.size();
+}
+
+/* Returns the output format that is used in the PixelBuffers that are passed into the callback. */
+- (int) getOutputFormat {
+  return pixel_format;
 }
 
 // Return the AVCaptureDevice* for the given index
@@ -583,20 +688,22 @@
     case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:  return CA_YUV420BP;  
     case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:   return CA_YUVJ420BP;  
     case kCVPixelFormatType_32ARGB:                        return CA_ARGB32;  
-    case kCVPixelFormatType_32BGRA:                        return CA_BGRA32;  
+    case kCVPixelFormatType_32BGRA:                        return CA_BGRA32;
+    case kCMVideoCodecType_JPEG_OpenDML:                   return CA_JPEG_OPENDML;
     default:                                               return CA_NONE;
   }
 }
 
 - (int) captureFormatToCvPixelFormat: (int) fmt {
   switch(fmt) {
-    case CA_UYVY422:    return kCVPixelFormatType_422YpCbCr8 ;
-    case CA_YUYV422:    return kCVPixelFormatType_422YpCbCr8_yuvs;  
-    case CA_YUV420BP:   return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;  
-    case CA_YUVJ420BP:  return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;  
-    case CA_ARGB32:     return kCVPixelFormatType_32ARGB;  
-    case CA_BGRA32:     return kCVPixelFormatType_32BGRA;  
-    default:            return CA_NONE;
+    case CA_UYVY422:        return kCVPixelFormatType_422YpCbCr8 ;
+    case CA_YUYV422:        return kCVPixelFormatType_422YpCbCr8_yuvs;  
+    case CA_YUV420BP:       return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;  
+    case CA_YUVJ420BP:      return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;  
+    case CA_ARGB32:         return kCVPixelFormatType_32ARGB;  
+    case CA_BGRA32:         return kCVPixelFormatType_32BGRA;
+    case CA_JPEG_OPENDML:   return kCMVideoCodecType_JPEG_OpenDML;
+    default:                return CA_NONE;
   }
 }
 
@@ -698,6 +805,10 @@ int ca_av_get_output_formats(void* cap, std::vector<ca::Format>& result) {
   return [(id)cap getOutputFormats: result];
 }
 
+int ca_av_get_output_format(void* cap) {
+  return [(id)cap getOutputFormat];
+}
+
 int ca_av_open(void* cap, ca::Settings settings) {
   return [(id)cap openDevice:settings];
 }
@@ -719,3 +830,33 @@ void ca_av_set_callback(void* cap, ca::frame_callback fc, void* user) {
 }
 
 @end
+
+static void print_cmformatdescription_info(CMFormatDescriptionRef desc) {
+  
+  FourCharCode fcc = CMFormatDescriptionGetMediaSubType(desc);
+  char* fcc_ptr = (char*)&fcc;
+  CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(desc);
+  CMMediaType media_type = CMFormatDescriptionGetMediaType(desc);
+  int pix_fmt = CMFormatDescriptionGetMediaSubType(desc);
+    
+  printf("Info: CMVideoDimensions, width: %d, height: %d\n", dims.width, dims.height);
+  printf("Info: CMMediaType, is video: %c\n", media_type == kCMMediaType_Video ? 'y' : 'c');
+  printf("Info: FourCharCode: %c%c%c%c\n", fcc_ptr[3], fcc_ptr[2], fcc_ptr[1], fcc_ptr[1]);
+
+  if (kCVPixelFormatType_422YpCbCr8 == pix_fmt) { 
+    printf("Info: MediaSubtype:  kCVPixelFormatType_422YpCbCr8 (CA_UYVY422).\n");
+  }
+  else if(kCVPixelFormatType_422YpCbCr8_yuvs == pix_fmt) {
+    printf("Info: MediaSubtype: kCVPixelFormatType_422YpCbCr8_yuvs (CA_YUYV422).\n");
+  }
+  else if (kCVPixelFormatType_32BGRA == pix_fmt) {
+    printf( "Info: MediaSubtype: kCVPixelFormatType_32BGRA.\n");
+  }
+  else if (kCMVideoCodecType_JPEG_OpenDML == pix_fmt) {
+    printf("Info: MediaSubtype:  kCMVideoCodecType_JPEG_OpenDML.\n");
+  }
+  else {
+    printf("Info: MediaSubtype:  Unknown: %d\n", pix_fmt);
+  }
+  printf("\n");
+}

@@ -62,4 +62,9 @@ namespace ca {
     ca_av_get_output_formats(cap, result);
     return result;
   }
+
+  int AVFoundation_Capture::getOutputFormat() {
+    return ca_av_get_output_format(cap);
+  }
+  
 }; // namespace ca

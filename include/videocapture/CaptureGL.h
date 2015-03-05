@@ -234,7 +234,7 @@ static const char* CAPTURE_GL_YUYV422_GENERIC_FS = ""
   "}"
   "";
 
-// Decode YUV420P (3 planes)
+/* Decode YUV420P (3 planes) */
 static const char* CAPTURE_GL_YUV420P_GENERIC_FS = ""
   "#version 330\n"
   "uniform sampler2D y_tex;"
@@ -283,6 +283,7 @@ namespace ca {
     void flip(bool horizontal, bool vertical);                                         /* Flip the video horizontally or vertically. Following photoshop conventions. */
 
     /* Capabilities */
+    int getOutputFormat();                                                             /* Get the output format that is used for the pixel buffers that are passed into the callback. This should only be called wen you've opened the capture device. */
     std::vector<Capability> getCapabilities(int device);                               /* Get the capabilities for the given device. */
     std::vector<Device> getDevices();                                                  /* Get a vector with the devices. */
     std::vector<Format> getOutputFormats();                                            /* Get the output formats that we can use. */ 
@@ -304,8 +305,7 @@ namespace ca {
     void updateYUV420P();
 
   public:
-    int fmt;                                                                           /* The pixel format we use. Used to setup graphics state */
-    int rendering_type;  /* what rendering type to use; e.g. use APPLE extension, or a generic YUV422 shader. */ 
+    int rendering_type;                                                                /* what rendering type to use; e.g. use APPLE extension, or a generic YUV422 shader. */ 
     int width;                                                                         /* The width of the frames we capture */
     int height;                                                                        /* The height of the frames we capture */
     float inv_win_w;                                                                   /* Inverse window/viewport width, used to calculate the correct position/offset values for the vertex shader . */
@@ -411,7 +411,17 @@ namespace ca {
 
     CaptureGL* gl = static_cast<CaptureGL*>(pixbuf.user);
 
-    if(gl->fmt == CA_YUYV422 || gl->fmt == CA_UYVY422 || gl->fmt == CA_YUV420P) {
+    /* @todo the callback is called from another thread so we should 
+       use a mutex here; using a boolean seems to work but is not the 
+       correct solution. I'll add a cross platform mutex at some point. */
+    if (true == gl->needs_update) {
+      return;
+    }
+    
+    if (gl->cap.getOutputFormat() == CA_YUYV422
+       || gl->cap.getOutputFormat() == CA_UYVY422
+       || gl->cap.getOutputFormat() == CA_YUV420P)
+    {
       memcpy((char*)gl->pixels, (char*)pixbuf.plane[0], pixbuf.nbytes);
       gl->needs_update = true;
     }
@@ -432,7 +442,6 @@ namespace ca {
 
   CaptureGL::CaptureGL(int driver)
     :cap(capturegl_on_frame, this, driver)
-    ,fmt(CA_NONE)
     ,rendering_type(CA_RENDERING_TYPE_NONE)
     ,width(0)
     ,height(0)
@@ -486,11 +495,10 @@ namespace ca {
     Settings settings;
     settings.device = device;
 
-    //cap.listCapabilities(device);
-
-    // find the best matching capability
+    /* find the best matching capability */
     int caps[] = { CA_YUYV422, CA_UYVY422, CA_YUV420P }; 
     int num_caps = 3;
+    int fmt = CA_NONE;
     for(int i = 0; i < num_caps; ++i) {
       settings.capability = cap.findCapability(device, width, height, caps[i]);
       if(settings.capability >= 0) {
@@ -504,7 +512,7 @@ namespace ca {
       return -1;
     }
 
-    // find the best output format
+    /* find the best output format */
     std::vector<Format> formats = cap.getOutputFormats();
     for(size_t i = 0; i < formats.size(); ++i) {
       Format& f = formats[i];
@@ -516,7 +524,7 @@ namespace ca {
       }
     }
 
-    // for now we set the format to the capability.
+    /* for now we set the format to the capability. */
     if(settings.format == -1) {
       settings.format = settings.capability;
     }
@@ -548,7 +556,7 @@ namespace ca {
           printf("Error: trying to use capability %lu, but that capability doesn't have a pixel format set.\n", i);
           return -3;
         }
-        fmt = cap.pixel_format;
+
         width = cap.width;
         height = cap.height;
         break;
@@ -560,12 +568,14 @@ namespace ca {
       return -3;
     }
 
+    /* After opening we need to update the format because some SDKs can convert the format. */
+
     if(setupGraphics() < 0) {
       printf("Error: cannot setup the GL graphics.\n");
       return -4;
     }
 
-    // set the scale factor.
+    /* set the scale factor. */
     GLint vp[4]; 
     glGetIntegerv(GL_VIEWPORT, vp);
     resize(vp[2], vp[3]);
@@ -585,10 +595,10 @@ namespace ca {
     
     if(needs_update) {
 
-      if(fmt == CA_YUV420P) {
+      if(cap.getOutputFormat() == CA_YUV420P) {
         updateYUV420P();
       }
-      else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
+      else if(cap.getOutputFormat() == CA_YUYV422 || cap.getOutputFormat() == CA_UYVY422) {
         updateYUYV422();
       }
 
@@ -620,10 +630,10 @@ namespace ca {
 
     /* Determine the best rendering type. */
     if (0 == capturegl_is_extension_supported("GL_RGB_422_APPLE")) {
-      if (fmt == CA_UYVY422) {
+      if (cap.getOutputFormat() == CA_UYVY422) {
         setRenderingType(CA_RENDERING_TYPE_UYVY422_APPLE);
       }
-      else if (fmt == CA_YUYV422) {
+      else if (cap.getOutputFormat() == CA_YUYV422) {
         setRenderingType(CA_RENDERING_TYPE_YUYV422_APPLE);
       }
       else {
@@ -633,13 +643,13 @@ namespace ca {
     }
     else {
       /* GL_RGB422 is defined, but not supported. */
-      if (fmt == CA_UYVY422) {
+      if (cap.getOutputFormat() == CA_UYVY422) {
         setRenderingType(CA_RENDERING_TYPE_UYVY422_GENERIC);
       }
-      else if (fmt == CA_YUYV422) {
+      else if (cap.getOutputFormat() == CA_YUYV422) {
         setRenderingType(CA_RENDERING_TYPE_YUYV422_GENERIC);
       }
-      else if (fmt == CA_YUV420P) {
+      else if (cap.getOutputFormat() == CA_YUV420P) {
         setRenderingType(CA_RENDERING_TYPE_YUV420P_GENERIC);
       }
       else {
@@ -709,7 +719,7 @@ namespace ca {
 
     glUseProgram(prog);
 
-    if(fmt == CA_YUV420P) {
+    if(cap.getOutputFormat() == CA_YUV420P) {
       u_tex0 = glGetUniformLocation(prog, "y_tex");
       u_tex1 = glGetUniformLocation(prog, "u_tex");
       u_tex2 = glGetUniformLocation(prog, "v_tex");
@@ -717,7 +727,7 @@ namespace ca {
       glUniform1i(u_tex1, 1);
       glUniform1i(u_tex2, 2);
     }
-    else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
+    else if(cap.getOutputFormat() == CA_YUYV422 || cap.getOutputFormat() == CA_UYVY422) {
       u_tex0 = glGetUniformLocation(prog, "u_tex");
       glUniform1i(u_tex0, 0);
     }
@@ -731,13 +741,13 @@ namespace ca {
 
   int CaptureGL::setupTextures() {
 
-    if(frame.set(width, height, fmt) < 0) {
+    if(frame.set(width, height, cap.getOutputFormat()) < 0) {
       printf("Error: cannot set the frame object.\n");
       return -1;
     }
     
-    // create textures to the back the pixel format.
-    if(fmt == CA_YUV420P) {
+    /* create textures to the back the pixel format. */
+    if(cap.getOutputFormat() == CA_YUV420P) {
       pixels = new unsigned char[frame.nbytes[0] + frame.nbytes[1] + frame.nbytes[2]];
 
       glGenTextures(1, &tex0);
@@ -764,7 +774,7 @@ namespace ca {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-    else if(fmt == CA_YUYV422 || fmt == CA_UYVY422) {
+    else if(cap.getOutputFormat() == CA_YUYV422 || cap.getOutputFormat() == CA_UYVY422) {
 
       pixels = new unsigned char[frame.nbytes[0]];
       memset(pixels, 0x00, frame.nbytes[0]);
@@ -850,7 +860,7 @@ namespace ca {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex0);
 
-    if(fmt == CA_YUV420P) {
+    if(cap.getOutputFormat() == CA_YUV420P) {
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, tex1);
       glActiveTexture(GL_TEXTURE2);
