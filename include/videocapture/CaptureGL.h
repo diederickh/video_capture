@@ -79,9 +79,15 @@
 #  define GL_RGB_RAW_422_APPLE 0x8A51
 #endif
 
-
 #include <videocapture/Types.h>
 #include <videocapture/Capture.h>
+
+#if defined(_WIN32)
+   #define WIN32_LEAN_AND_MEAN
+   #include <windows.h>
+#elif defined(__linux) or defined(__APPLE__)
+   #include <pthread.h>
+#endif
 
 static const char* CAPTURE_GL_VS = ""
   "#version 330\n"
@@ -265,6 +271,17 @@ namespace ca {
 
   void capturegl_on_frame(PixelBuffer& buffer);                                       /* Is called whenever a frame is received from the capture device */
   GLuint capturegl_create_shader(GLenum type, const char* source);                    /* Creates a shader for the given type. */
+
+  /* Threading, Mutex. */
+#if defined(_WIN32)
+  struct CaptureMutex {
+    CRITICAL_SECTION handle;
+  };
+#elif defined(__linux) or defined(__APPLE__)
+  struct CaptureMutex {
+    pthread_mutex_t handle;
+  };
+#endif
   
   class CaptureGL {
     
@@ -297,6 +314,12 @@ namespace ca {
     void setRenderingType(int rtype);                                                  /* Set one of the rendering types, is used to determine which shader to use. */
     const char* getFragmentShaderSource();                                             /* Returns the fragment shader to use, based on the current rendering type. */
 
+    /* Threading. */
+    int createMutex(CaptureMutex& m);
+    int destroyMutex(CaptureMutex& m); 
+    int lockMutex(CaptureMutex& m);
+    int unlockMutex(CaptureMutex& m);
+
   private:
     int setupGraphics();                                                               /* Creates the opengl objects */
     int setupShaders();                                                                /* Creates shaders for the pixel format */
@@ -328,6 +351,7 @@ namespace ca {
     GLuint tex2;                                                                       /* Texture that will be filled with the pixel data from the webcam (e.g. the U plane when using YUV420P). */
     unsigned char* pixels;                                                             /* When we use the YUYV422/YUV420 this will hold all the data */
     bool needs_update;                                                                 /* Is set to true when we receive a new frame */
+    CaptureMutex mutex;                                                                /* We use a mutex when accessing the pixel buffer we receive from the capture thread. */ 
   };
 
   inline void CaptureGL::setRenderingType(int rtype) {
@@ -357,8 +381,9 @@ namespace ca {
     }
   }
 
-  // Update the YUV420P Pixels
+  /* Update the YUV420P Pixels */
   inline void CaptureGL::updateYUV420P() {
+    
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     
     glBindTexture(GL_TEXTURE_2D, tex0);
@@ -371,7 +396,7 @@ namespace ca {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width[2], frame.height[2], GL_RED, GL_UNSIGNED_BYTE, pixels + frame.offset[2]);
   }
 
-  // Some wrappers around ca::Capture
+  /* Some wrappers around ca::Capture */
   inline int CaptureGL::listDevices() {
     return cap.listDevices();
   }
@@ -387,6 +412,7 @@ namespace ca {
   inline int CaptureGL::findCapability(int device, int width, int height, int fmt) {
     return cap.findCapability(device, width, height, fmt);
   }
+  
 } /* namespace ca */
 
 #endif
@@ -411,19 +437,16 @@ namespace ca {
 
     CaptureGL* gl = static_cast<CaptureGL*>(pixbuf.user);
 
-    /* @todo the callback is called from another thread so we should 
-       use a mutex here; using a boolean seems to work but is not the 
-       correct solution. I'll add a cross platform mutex at some point. */
-    if (true == gl->needs_update) {
-      return;
-    }
-    
     if (gl->cap.getOutputFormat() == CA_YUYV422
        || gl->cap.getOutputFormat() == CA_UYVY422
        || gl->cap.getOutputFormat() == CA_YUV420P)
     {
-      memcpy((char*)gl->pixels, (char*)pixbuf.plane[0], pixbuf.nbytes);
-      gl->needs_update = true;
+      gl->lockMutex(gl->mutex);
+      {
+        memcpy((char*)gl->pixels, (char*)pixbuf.plane[0], pixbuf.nbytes);
+        gl->needs_update = true;
+      }
+      gl->unlockMutex(gl->mutex);
     }
     else {
       printf("Error: pixels not handled in capturegl_on_frame().\n");
@@ -464,6 +487,7 @@ namespace ca {
     ,pixels(NULL)
     ,needs_update(false)
     {
+      createMutex(mutex);
     }
 
   CaptureGL::~CaptureGL() {
@@ -483,8 +507,10 @@ namespace ca {
     u_tex0 = 0;
     u_tex1 = 0;
     u_tex2 = 0;
+
+    destroyMutex(mutex);
     
-    // @todo - free GL 
+    /* @todo - free GL  */
   }
 
   int CaptureGL::open(int device, int w, int h) {
@@ -592,17 +618,32 @@ namespace ca {
   }
 
   int CaptureGL::update() {
+
+    bool has_new_frame = false;
+
+    lockMutex(mutex);
+    {
+      has_new_frame = needs_update;
+    }
+    unlockMutex(mutex);
+
+    if (false == has_new_frame) {
+      return false;
+    }
     
-    if(needs_update) {
+    if(has_new_frame) {
 
-      if(cap.getOutputFormat() == CA_YUV420P) {
-        updateYUV420P();
+      lockMutex(mutex);
+      {
+        if(cap.getOutputFormat() == CA_YUV420P) {
+          updateYUV420P();
+        }
+        else if(cap.getOutputFormat() == CA_YUYV422 || cap.getOutputFormat() == CA_UYVY422) {
+          updateYUYV422();
+        }
+        needs_update = false;
       }
-      else if(cap.getOutputFormat() == CA_YUYV422 || cap.getOutputFormat() == CA_UYVY422) {
-        updateYUYV422();
-      }
-
-      needs_update = false;
+      unlockMutex(mutex);
     }
 
     cap.update();
@@ -883,6 +924,72 @@ namespace ca {
     win_h = h;
   }
 
+#if defined(_WIN32)
+  
+  int CaptureGL::createMutex(CaptureMutex& m) {
+    InitializeCriticalSection(&m.handle);
+    return 0;
+  }
+  
+  int CaptureGL::lockMutex(CaptureMutex& m) {
+    EnterCriticalSection(&m.handle);
+    return 0;
+  }
+
+  int CaptureGL::unlockMutex(CaptureMutex& m) {
+    LeaveCriticalSection(&m.handle);
+    return 0;
+  }
+
+  int CaptureGL::destroyMutex(CaptureMutex& m) {
+    DeleteCriticalSection(&m.handle);
+    return 0;
+  }
+  
+#elif defined(__linux) or defined(__APPLE__)
+  
+  int CaptureGL::createMutex(CaptureMutex& m) {
+    
+    if (0 != pthread_mutex_init(&m.handle, NULL)) {
+      printf("Error: failed to create the mutex to sync the pixel data in CaptureGL.\n");
+      return -1;
+    }
+    
+    return 0;
+  }
+  
+  int CaptureGL::lockMutex(CaptureMutex& m) {
+    
+    if (0 != pthread_mutex_lock(&m.handle)) {
+      printf("Error: failed to lock the mutex to sync the pixel data in CaptureGL.\n");
+      return -1;
+    }
+    
+    return 0;
+  }
+
+  int CaptureGL::unlockMutex(CaptureMutex& m) {
+    
+    if (0 != pthread_mutex_unlock(&m.handle)) {
+      printf("Error: failed to unlock the mutex to sync the pixel data in CaptureGL.\n");
+      return -1;
+    }
+
+    return 0;
+  }
+
+  int CaptureGL::destroyMutex(CaptureMutex& m) {
+    
+    if (0 != pthread_mutex_destroy(&m.handle)) {
+      printf("Error: failed to destroy the mutex to sync the pixel data in CaptureGL.\n");
+      return -2;
+    }
+
+    return 0;
+  }
+  
+#endif
+  
   /* checks the compile info, if it didn't compile we return < 0, otherwise 0 */
   static int print_shader_compile_info(GLuint shader) {
  
