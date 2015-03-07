@@ -71,7 +71,7 @@ namespace ca {
 
 
   class PixelBuffer;
-  //typedef void(*frame_callback)(void* pixels, int nbytes, void* user);
+
   typedef void(*frame_callback)(PixelBuffer& buffer);
 
   /* -------------------------------------- */
