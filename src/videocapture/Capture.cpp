@@ -150,13 +150,4 @@ namespace ca {
   
   /* ------------------------------------------------------------------------- */
 
-  static bool sort_capability(Capability& a, Capability& b) {
-    
-    if (a.filter_score != b.filter_score) {
-      return a.filter_score > b.filter_score;
-    }
-
-    return a.fps > b.fps;
-  }
-
 } // namespace ca
