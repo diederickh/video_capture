@@ -198,7 +198,7 @@ namespace ca {
     // stream on!
     enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if(v4l2_ioctl(capture_device_fd, VIDIOC_STREAMON, &type) == -1) {
-      printf("Error: Failed to start the video capture stream.\n");
+      printf("Error: Failed to start the video capture stream, VIDIOC_STREAMON failed.\n");
       return -5;
     }
 
@@ -238,7 +238,7 @@ namespace ca {
 
   // Read one more frame.
   int V4L2_Capture::readFrame() {
-
+    
     if(capture_device_fd < 0) {
       printf("Error: cannot readFrame() because the capture device descriptor is invalid.\n");
       return -1;
