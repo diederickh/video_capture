@@ -130,6 +130,9 @@ namespace ca {
     }
 
     state |= CA_STATE_OPENED;
+
+    pixel_buffer.pixel_format = cap.pixel_format;
+
     return 1;
   }
 
@@ -229,6 +232,7 @@ namespace ca {
   }
 
   void V4L2_Capture::update() {
+
     readFrame();
   }
 
@@ -240,6 +244,7 @@ namespace ca {
       return -1;
     }
 
+    /* @todo do we really need to memset the buff to zero every frame? */
     struct v4l2_buffer buf;
     memset(&buf, 0, sizeof(buf));
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -247,11 +252,11 @@ namespace ca {
   
     if(v4l2_ioctl(capture_device_fd, VIDIOC_DQBUF, &buf) == -1) {
       if(errno == EAGAIN) {
-        return -2; // everything ok; just not ready yet
+        return -2; /* everything ok; just not ready yet */
       }
       else if(errno == EIO) {
         printf("Error: IO error.\n");
-        return -3; // we could handle this as an error.
+        return -3; /* we could handle this as an error. */
       }
       else {
         printf("Error: with reading the memory buffer: %s.\n", strerror(errno));
@@ -322,6 +327,7 @@ namespace ca {
 
         // frame sizes and fps for this pixel format
         struct v4l2_frmsizeenum frames;
+        memset(&frames, 0x00, sizeof(frames));
         frames.index = 0;
         frames.pixel_format = fmtdesc.pixelformat;
 
@@ -329,6 +335,7 @@ namespace ca {
 
           if(frames.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
             struct v4l2_frmivalenum fpse;
+            memset(&fpse, 0x00, sizeof(fpse));
             fpse.index = 0;
             fpse.pixel_format = frames.pixel_format;
             fpse.width = frames.discrete.width;

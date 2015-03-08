@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
+#include <stdio.h>
 
 /* General */
 #define CA_NONE -1

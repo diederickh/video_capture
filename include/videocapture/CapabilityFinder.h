@@ -41,6 +41,7 @@
 #ifndef VIDEO_CAPTURE_CAPABILITY_FINDER_H
 #define VIDEO_CAPTURE_CAPABILITY_FINDER_H
 
+#include <algorithm>
 #include <videocapture/Capture.h>
 #include <videocapture/Types.h>
 

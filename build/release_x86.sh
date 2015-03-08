@@ -7,7 +7,7 @@ set -x
 cd build.release
 
 cmake \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DUSE_OPENGL=On \
     -DUSE_GENERATE_X86=On \
     -DUSE_GENERATE_IPHONE=Off \

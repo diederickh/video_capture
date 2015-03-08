@@ -580,6 +580,8 @@ namespace ca {
       pixel_format = found_cap.pixel_format;
     }
 
+    printf("Using format: %s, capability: %d\n", format_to_string(pixel_format).c_str(), cfg.capability);
+
     if(cap.open(cfg) < 0) {
       printf("Error: cannot open the capture device.\n");
       return -3;
@@ -612,6 +614,8 @@ namespace ca {
 
     bool has_new_frame = false;
 
+    cap.update();
+
     lockMutex(mutex);
     {
       has_new_frame = needs_update;
@@ -636,8 +640,6 @@ namespace ca {
       }
       unlockMutex(mutex);
     }
-
-    cap.update();
 
     return needs_update;
   }
