@@ -131,7 +131,7 @@ static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
       return  -8;
     }
 
-    /* Create the output handler (needed for getOutputFormats) */
+    /* Create the output handler (needed for getOutputFormatormats) */
     if(output == nil) {
       output = [[AVCaptureVideoDataOutput alloc] init];
       if(!output) {
@@ -354,11 +354,13 @@ static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
     if (0 == is_pixel_buffer_set) {
       CMFormatDescriptionRef desc = CMSampleBufferGetFormatDescription(sampleBuffer);
       CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(desc);
-
+      CMPixelFormatType pix_fmt = CMFormatDescriptionGetMediaSubType(desc);
+      
       pixel_buffer.width[0] = dims.width;
       pixel_buffer.height[0] = dims.height;
       pixel_buffer.stride[0] = 0; /* What should we store here? */
       pixel_buffer.nbytes = total_length;
+      pixel_buffer.pixel_format = [self getCapturePixelFormat: pix_fmt];
 
       is_pixel_buffer_set = 1;
     }
@@ -391,7 +393,10 @@ static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
 
   /* Fill the pixel_buffer member with some info that won't change per frame. */
   if (0 == is_pixel_buffer_set) {
-
+    
+    CMFormatDescriptionRef desc = CMSampleBufferGetFormatDescription(sampleBuffer);
+    CMPixelFormatType pix_fmt = CMFormatDescriptionGetMediaSubType(desc);
+    
     if (true == CVPixelBufferIsPlanar(buffer)) {
       size_t plane_count = CVPixelBufferGetPlaneCount(buffer);
       if (plane_count > 3) {
@@ -418,6 +423,9 @@ static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
       pixel_buffer.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
       pixel_buffer.nbytes = pixel_buffer.stride[0] * pixel_buffer.height[0];
     }
+    
+    pixel_buffer.pixel_format = [self getCapturePixelFormat: pix_fmt];
+    
     is_pixel_buffer_set = 1;
   }
 
@@ -608,9 +616,11 @@ static void print_cmformatdescription_info(CMFormatDescriptionRef desc);
 }
 
 /* Returns the output format that is used in the PixelBuffers that are passed into the callback. */
+/*
 - (int) getOutputFormat {
   return pixel_format;
 }
+*/
 
 // Return the AVCaptureDevice* for the given index
 - (AVCaptureDevice*) getCaptureDevice: (int) device {
@@ -803,10 +813,6 @@ int ca_av_get_capabilities(void* cap, int device, std::vector<ca::Capability>& r
 
 int ca_av_get_output_formats(void* cap, std::vector<ca::Format>& result) {
   return [(id)cap getOutputFormats: result];
-}
-
-int ca_av_get_output_format(void* cap) {
-  return [(id)cap getOutputFormat];
 }
 
 int ca_av_open(void* cap, ca::Settings settings) {

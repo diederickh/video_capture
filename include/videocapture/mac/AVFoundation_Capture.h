@@ -30,7 +30,7 @@ namespace ca {
     void update();
     
     /* Capabilities */
-    int getOutputFormat();
+    //    int getOutputFormat();
     std::vector<Capability> getCapabilities(int device);
     std::vector<Device> getDevices();
     std::vector<Format> getOutputFormats();

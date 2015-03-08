@@ -48,23 +48,23 @@ namespace ca {
     void update();
 
     /* Capabilities */
-    int getOutputFormat();                                                              /* When you've opened the capture device this function will return the pixel format that is used for the buffers that are passed into the callback. Some SDKs support conversion of compressed formats to e.g. YUY* pixel formats. */
     std::vector<Capability> getCapabilities(int device);
     std::vector<Device> getDevices();
     std::vector<Format> getOutputFormats();
-
+    int hasOutputFormat(int format);
+    
     /* Info */
     int listDevices();                         
     int listCapabilities(int device);          
     int listOutputFormats();                   
     int findCapability(int device, int width, int height, int fmt);
-    int findCapability(int device, int width, int height, int* fmt, int nfmts);        /* Test several different capture formats. */
-    int findCapability(int device, std::vector<Capability> caps);                      /* Test the given capabilities in order and return the best one available. It wil the first found capability or -1 when none was found. */
+    int findCapability(int device, int width, int height, int* fmt, int nfmts);                 /* Test several different capture formats. */
+    int findCapability(int device, std::vector<Capability> caps);                               /* Test the given capabilities in order and return the best one available. It wil the first found capability or -1 when none was found. */
 
   public:
-    Base* cap;                                                                         /* The capture implementation */
+    Base* cap;                                                                                  /* The capture implementation */
   };
 
-} // namespace ca
+} /* namespace ca */
 
 #endif

@@ -22,6 +22,7 @@ namespace ca {
     offset[0] = 0;
     offset[1] = 0;
     offset[2] = 0;
+    pixel_format = CA_NONE;
     user = NULL;
   }
    
@@ -31,7 +32,8 @@ namespace ca {
       printf("error: cannot setup pixel buffer because w or h is 0.\n");
       return -1;
     }
-    
+
+    pixel_format = fmt;
     width[0] = w;
     height[0] = h;
 
@@ -101,6 +103,28 @@ namespace ca {
     fps_index = CA_NONE;
     pixel_format_index = CA_NONE;
     user = NULL;
+    filter_score = 0;
+    index = -1;
+  }
+
+  /* CAPABILITY FILTER */
+  /* -------------------------------------- */
+  CapabilityFilter::CapabilityFilter(int attribute, double value, int priority)
+    :attribute(attribute)
+    ,value(value)
+    ,priority(priority)
+  {
+
+  }
+
+  CapabilityFilter::~CapabilityFilter() {
+    clear();
+  }
+
+  void CapabilityFilter::clear() {
+    attribute = CA_NONE;
+    value = 0.0;
+    priority = 0;
   }
 
   /* DEVICE */

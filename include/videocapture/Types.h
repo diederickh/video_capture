@@ -41,7 +41,7 @@
 #define CA_H264 13                                                                  /* H264 */
 #define CA_MJPEG 14                                                                 /* MJPEG 2*/
 
-/* Frame rates */
+/* Frame rates (IMPORANTANT: higher framerates MUST have a higher integer value for capability filtering)*/
 #define CA_FPS_60_00   6000
 #define CA_FPS_59_94   5994
 #define CA_FPS_50_00   5000
@@ -62,10 +62,15 @@
 #define CA_FPS_2_00    200
 
 /* States (may be be used by implementations) */
-
 #define CA_STATE_NONE 0x00                                                         /* Default state */
 #define CA_STATE_OPENED 0x01                                                       /* The user opened a device */
 #define CA_STATE_CAPTUREING 0x02                                                   /* The user started captureing */
+
+/* Capability Filter Attributes. */
+#define CA_WIDTH 0                                                                 /* Used by the `filterCapabilities()` feature; filter on width. */
+#define CA_HEIGHT 1                                                                /* Used by the `filterCapabilities()` feature; filter on height. */
+#define CA_RATIO 2                                                                 /* Used by the `filterCapabilities()` feature; filter on ratio (width/height). */
+#define CA_PIXEL_FORMAT 3                                                          /* Used by the `filterCapabilities()` feature; filter on pixel format (CA_YUYV422, etc..). */
  
 namespace ca {
 
@@ -84,12 +89,13 @@ namespace ca {
   public:
     uint8_t* pixels;                                                                /* When data is one continuous block of member you can use this, otherwise it points to the same location as plane[0]. */
     uint8_t* plane[3];                                                              /* Pointers to the pixel data; when we're a planar format all members are set, if packets only plane[0] */
-    size_t stride[3];
-    size_t width[3];
-    size_t height[3];
+    size_t stride[3];                                                               /* The number of bytes you should jump per row when reading the pixel data. Note that some buffer may have extra bytse at the end for memory alignment. */
+    size_t width[3];                                                                /* The width; when planar each plane will have it's own value; otherwise only the first index is set. */
+    size_t height[3];                                                               /* The height; when planar each plane will have it's own value; otherwise only the first index is set. */
     size_t offset[3];                                                               /* When the data is planar but packed, these contains the byte offsets from the first byte / plane. e.g. you can use this with YUV420P. */ 
-    size_t nbytes;
-    void* user;
+    size_t nbytes;                                                                  /* The total number of bytes that make up the frame. This doesn't have to be one continuous array when the data is planar. */
+    int pixel_format;                                                               /* The pixel format of the buffer; e.g. CA_YUYV422, CA_UYVY422, CA_JPEG_OPENDML, etc.. */
+    void* user;                                                                     /* Can be set to any user data that can be used in the frame callback. */
   };
 
   /* -------------------------------------- */
@@ -114,6 +120,24 @@ namespace ca {
     int pixel_format_index;                                                         /* Used by the implementation, represents an index to the pixel format for te implementation */
     std::string description;                                                        /* A capture driver can add some additional information here. */
     void* user;                                                                     /* Can be set by the implementation to anything which is suitable */
+
+    /* Filtering */
+    int filter_score;                                                               /* When using `filterCapabilities()` we assign each found capability a score that is used to sort the capabilities from best match to worst. */
+    int index;                                                                      /* The index in the capabilities vector when you call `getCapabilities()`. */
+  };
+
+  /* -------------------------------------- */
+
+  class CapabilityFilter {
+  public:
+    CapabilityFilter(int attribute, double value, int priority);
+    ~CapabilityFilter();
+    void clear();
+    
+  public:
+    int attribute;
+    double value;
+    int priority;
   };
 
   /* -------------------------------------- */

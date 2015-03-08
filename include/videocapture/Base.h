@@ -32,7 +32,7 @@ namespace ca {
     virtual std::vector<Capability> getCapabilities(int device) = 0;              /* Retrieve a list with capabilities. */
     virtual std::vector<Device> getDevices() = 0;                                 /* Retrieve a list with devices. */
     virtual std::vector<Format> getOutputFormats() = 0;                           /* Some capture SDKs have support for automatic conversion of the raw data it receives from capture devices to more common output values like YUV. */
-    virtual int getOutputFormat() = 0;                                            /* This function should return the capture format that is used and by the capture SDK. This should be the final output format that is used. e.g. on Mac you can automotically convert from JPEG to a YUV* format, this function should return the YUV format. */  
+    //    virtual int getOutputFormat() = 0;                                            /* This function should return the capture format that is used and by the capture SDK. This should be the final output format that is used. e.g. on Mac you can automotically convert from JPEG to a YUV* format, this function should return the YUV format. */  
     
     int listDevices();                                                           /* List the available capture devices for the implementation and return the number of found devices. */
     int listCapabilities(int device);                                            /* List the available capabilities for the given device. */

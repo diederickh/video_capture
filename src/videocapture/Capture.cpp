@@ -2,7 +2,7 @@
 #include <videocapture/Capture.h>
 
 namespace ca {
-  
+
   Capture::Capture(frame_callback fc, void* user, int driver)
     :cap(NULL)
   {
@@ -90,9 +90,18 @@ namespace ca {
     return cap->getOutputFormats();
   }
 
-  int Capture::getOutputFormat() {
+  int Capture::hasOutputFormat(int format) {
     assert(cap != NULL);
-    return cap->getOutputFormat();
+    
+    std::vector<Format> formats = getOutputFormats();
+    
+    for (size_t i = 0; i < formats.size(); ++i) {
+      if (formats[i].format == format) {
+        return 0;
+      }
+    }
+    
+    return -1;
   }
 
   int Capture::listDevices() {
@@ -137,6 +146,17 @@ namespace ca {
       }
     }
     return -1;
+  }
+  
+  /* ------------------------------------------------------------------------- */
+
+  static bool sort_capability(Capability& a, Capability& b) {
+    
+    if (a.filter_score != b.filter_score) {
+      return a.filter_score > b.filter_score;
+    }
+
+    return a.fps > b.fps;
   }
 
 } // namespace ca

@@ -7,6 +7,7 @@ set(videocapture_sources
   ${sd}/videocapture/Capture.cpp
   ${sd}/videocapture/Types.cpp
   ${sd}/videocapture/Utils.cpp
+  ${sd}/videocapture/CapabilityFinder.cpp
 )
 
 set(videocapture_include_dirs 
@@ -213,8 +214,12 @@ if (NOT USE_IOS)
   add_executable(test_conversion ${sd}/test_conversion.cpp)
   target_link_libraries(test_conversion ${videocapture_libraries} videocapture)
   install(TARGETS test_conversion RUNTIME DESTINATION bin)
-endif()
 
+  add_executable(test_capability_filter ${sd}/test_capability_filter.cpp)
+  target_link_libraries(test_capability_filter ${videocapture_libraries} videocapture)
+  install(TARGETS test_capability_filter RUNTIME DESTINATION bin)
+      
+endif()
 
 if (USE_DECKLINK)
   add_executable(decklink_example ${sd}/decklink_example.cpp)

@@ -50,6 +50,7 @@ namespace ca {
       case CA_JPEG_OPENDML:     return "CA_JPEG_OPENDML";
       case CA_H264:             return "CA_H264";
       case CA_MJPEG:            return "CA_MJPEG";
+      case CA_NONE:             return "CA_NONE";
       default:                  return "UNKNOWN_FORMAT";
     }
   }

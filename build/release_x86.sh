@@ -33,5 +33,6 @@ cd ${install_path}/bin
 ./easy_opengl_example
 #./decklink_example
 #./test_conversion
+#./test_capability_filter
 
 

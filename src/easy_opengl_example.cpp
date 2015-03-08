@@ -81,40 +81,15 @@ int main() {
   // ----------------------------------------------------------------
 
   CaptureGL capture; 
-
+  int device = 0;
+  
   capture.cap.listDevices();
+  capture.cap.listCapabilities(device);
 
-
-#define USE_CAPABILITY 1
-#if USE_CAPABILITY
-  Settings cfg;
-  cfg.device = 1;
-  cfg.format = CA_UYVY422;
-
-  capture.cap.listCapabilities(cfg.device);
-
-  cfg.capability = capture.findCapability(cfg.device, w, h, CA_JPEG_OPENDML);
-  // cfg.capability = 92;
-  //cfg.capability = capture.findCapability(cfg.device, w, h, CA_UYVY422);
-  if (cfg.capability < 0) {
-    printf("Error: failed to find a capability.\n");
-    exit(EXIT_FAILURE);
-  }
-  //cfg.capability = 12;
-
-  if (capture.open(cfg) < 0) {
-    printf("Error: cannot open using the given capability.\n");
-    exit(EXIT_FAILURE);
-  }
-#else 
-  //if(capture.open(0, 640, 480) < 0) {
-  if(capture.open(0, 800, 600) < 0) {
-  // if(capture.open(0, 1280, 720) < 0) {
-  // if(capture.open(0, 1920, 1080) < 0) {
+  if (capture.open(device, 1280, 720) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
-#endif
 
   if(capture.start() < 0) {
     ::exit(EXIT_FAILURE);
