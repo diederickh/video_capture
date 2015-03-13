@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 d=${PWD}
 
 if [ ! -d build.release ] ; then

@@ -141,6 +141,23 @@ function compile() {
 }
 
 # ----------------------------------------------------------------------- #
+#                 C H E C K   I F   U T I L S   E X I S T
+# ----------------------------------------------------------------------- #
+if ! [ -x "$(command -v python)" ] ; then
+    echo ""
+    echo ""
+    echo "-------------------------------------------------"
+    echo "It seems that you haven't installed Python"
+    echo "or that it's not in your PATH variable, install"
+    echo "python or fix your PATH variable first."
+    echo "-------------------------------------------------"
+    echo ""
+    echo ""
+    exit
+fi
+
+
+# ----------------------------------------------------------------------- #
 #                D O W N L O A D   D E P E N D E N C I E S 
 # ----------------------------------------------------------------------- #
 if [ ! -d ${sd} ] ; then 

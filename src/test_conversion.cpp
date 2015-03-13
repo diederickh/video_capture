@@ -14,7 +14,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
+#include <tinylib.h>
 #include <fstream>
 #include <videocapture/Capture.h>
 
@@ -68,7 +69,7 @@ int main() {
   /* And start iterating. */
   while (true) {
     cap.update();
-    usleep(5 * 1000);
+    SLEEP_MILLIS(5000);
   }
   
   return 0;
