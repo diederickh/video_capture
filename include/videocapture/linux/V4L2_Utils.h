@@ -11,6 +11,6 @@ namespace ca {
   int v4l2_pixel_format_to_capture_format(int fmt);
   std::string v4l2_pixel_format_to_string(int fmt);
 
-}; // namespace ca
+} /* namespace ca */
 
 #endif

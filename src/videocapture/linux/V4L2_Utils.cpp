@@ -74,11 +74,21 @@ namespace ca {
       case V4L2_PIX_FMT_NV24: return "V4L2_PIX_FMT_NV24"; break;
       case V4L2_PIX_FMT_NV42: return "V4L2_PIX_FMT_NV42"; break;
       case V4L2_PIX_FMT_NV12M: return "V4L2_PIX_FMT_NV12M"; break;
+#if defined(V4L2_PIX_FMT_NV21M)
       case V4L2_PIX_FMT_NV21M: return "V4L2_PIX_FMT_NV21M"; break;
+#endif
+#if defined(V4L2_PIX_FMT_NV12MT)
       case V4L2_PIX_FMT_NV12MT: return "V4L2_PIX_FMT_NV12MT"; break;
+#endif
+#if defined(V4L2_PIX_FMT_NV12MT_16X16)
       case V4L2_PIX_FMT_NV12MT_16X16: return  "V4L2_PIX_FMT_NV12MT_16X16"; break;
+#endif
+#if defined(V4L2_PIX_FMT_YUV420M)
       case V4L2_PIX_FMT_YUV420M: return "V4L2_PIX_FMT_YUV420M"; break;
+#endif
+#if defined(V4L2_PIX_FMT_YVU420M)
       case V4L2_PIX_FMT_YVU420M: return "V4L2_PIX_FMT_YVU420M"; break;
+#endif
       case V4L2_PIX_FMT_SBGGR8: return "V4L2_PIX_FMT_SBGGR8"; break;
       case V4L2_PIX_FMT_SGBRG8: return "V4L2_PIX_FMT_SGBRG8"; break;
       case V4L2_PIX_FMT_SGRBG8: return "V4L2_PIX_FMT_SGRBG8"; break;
@@ -102,7 +112,9 @@ namespace ca {
       case V4L2_PIX_FMT_MPEG: return "V4L2_PIX_FMT_MPEG"; break;
       case V4L2_PIX_FMT_H264: return "V4L2_PIX_FMT_H264"; break;
       case V4L2_PIX_FMT_H264_NO_SC:  return "V4L2_PIX_FMT_H264_NO_SC"; break;
+#if defined(V4L2_PIX_FMT_H264_MVC)
       case V4L2_PIX_FMT_H264_MVC: return "V4L2_PIX_FMT_H264_MVC"; break; 
+#endif
       case V4L2_PIX_FMT_H263: return "V4L2_PIX_FMT_H263"; break;
       case V4L2_PIX_FMT_MPEG1: return "V4L2_PIX_FMT_MPEG1"; break;
       case V4L2_PIX_FMT_MPEG2: return "V4L2_PIX_FMT_MPEG2"; break;
@@ -110,7 +122,9 @@ namespace ca {
       case V4L2_PIX_FMT_XVID: return "V4L2_PIX_FMT_XVID"; break;
       case V4L2_PIX_FMT_VC1_ANNEX_G: return "V4L2_PIX_FMT_VC1_ANNEX_G"; break; 
       case V4L2_PIX_FMT_VC1_ANNEX_L: return "V4L2_PIX_FMT_VC1_ANNEX_L"; break; 
+#if defined(V4L2_PIX_FMT_VP8)
       case V4L2_PIX_FMT_VP8: return "V4L2_PIX_FMT_VP8"; break;
+#endif
       case V4L2_PIX_FMT_CPIA1: return "V4L2_PIX_FMT_CPIA1"; break;
       case V4L2_PIX_FMT_WNVA: return "V4L2_PIX_FMT_WNVA"; break;
       case V4L2_PIX_FMT_SN9C10X: return "V4L2_PIX_FMT_SN9C10X"; break;
@@ -136,7 +150,9 @@ namespace ca {
       case V4L2_PIX_FMT_KONICA420: return "V4L2_PIX_FMT_KONICA420"; break;
       case V4L2_PIX_FMT_JPGL: return "V4L2_PIX_FMT_JPGL"; break;
       case V4L2_PIX_FMT_SE401: return "V4L2_PIX_FMT_SE401"; break;
+#if defined(V4L2_PIX_FMT_S5C_UYVY_JPG)
       case V4L2_PIX_FMT_S5C_UYVY_JPG: return "V4L2_PIX_FMT_S5C_UYVY_JPG"; break; 
+#endif
       default: return "UNKNOWN PIXEL FORMAT";  break;
     }
   }

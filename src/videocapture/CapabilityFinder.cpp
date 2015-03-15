@@ -4,7 +4,7 @@ namespace ca {
 
   /* ------------------------------------------------------------------------- */
 
-  static bool sort_capability(Capability& a, Capability& b);                   /* Used when filtering capabilities. This will sort the capabilites on the filter_score. */
+  static bool sort_capability(const Capability& a, const Capability& b);       /* Used when filtering capabilities. This will sort the capabilites on the filter_score. */
   
   /* ------------------------------------------------------------------------- */
 
@@ -154,7 +154,7 @@ namespace ca {
       
   /* ------------------------------------------------------------------------- */
 
-  static bool sort_capability(Capability& a, Capability& b) {
+  static bool sort_capability(const Capability& a, const Capability& b) {
     
     if (a.filter_score != b.filter_score) {
       return a.filter_score > b.filter_score;
