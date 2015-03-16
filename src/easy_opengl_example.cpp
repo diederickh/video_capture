@@ -86,7 +86,7 @@ int main() {
   capture.cap.listDevices();
   capture.cap.listCapabilities(device);
   exit(0);
-  if (capture.open(device, 640, 48) < 0) {
+  if (capture.open(device, 1280, 720) < 0) {
     printf("Cannot open the capture device.\n");
     ::exit(EXIT_FAILURE);
   }
