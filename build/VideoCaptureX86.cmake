@@ -87,9 +87,11 @@ if(UNIX AND NOT APPLE)
     ${sd}/videocapture/linux/V4L2_Types.cpp
     ${sd}/videocapture/linux/V4L2_Utils.cpp
     )
+
+  find_library(libudev udev)
  
   list(APPEND videocapture_libraries
-    udev
+    ${libudev}
     )
 
   if (USE_DECKLINK)
