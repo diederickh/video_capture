@@ -44,7 +44,6 @@ fi
 cd ${install_path}/bin
 
 #./easy_opengl_example
-
 #./videocapture
 #./opengl_example
 #./api_example

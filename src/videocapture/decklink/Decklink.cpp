@@ -21,6 +21,10 @@ namespace ca {
 
 #if defined(_WIN32)
     if (false == is_com_initialized) {
+      /* 
+         See notes in MediaCapture_Foundation about CoInitialize ... 
+         @todo we should use the same init.
+      */
       CoInitialize(NULL);
     }
 #endif
