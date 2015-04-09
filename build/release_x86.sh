@@ -1,10 +1,21 @@
 #!/bin/sh
 
-set -x
+# Checkout the dependencies module
+if [ ! -d ${d}/dependencies ] ; then
+    git clone git@github.com:roxlu/dependencies.git
+fi
 
-. ./set_variables.sh
+# Set environment variables
+vs="2013"
+source ./dependencies/build.sh
 
-cd build.release
+# Create build dir.
+if [ ! -d ${build_dir} ] ; then
+    mkdir ${build_dir}
+fi
+
+# And compile
+cd ${build_dir}
 
 cmake \
     -DCMAKE_BUILD_TYPE=Debug \
@@ -14,14 +25,21 @@ cmake \
     -DUSE_GENERATE_IPHONE_SIMULATOR=Off \
     -DUSE_GENERATE_RPI=Off \
     -DUSE_DECKLINK=Off \
+    -DCMAKE_BUILD_TYPE=${cmake_build_type} \
     -DEXTERN_LIB_DIR=${extern_path}/lib \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
-    -DTINYLIB_DIR=${d}/sources/tinylib/ \
+    -DTINYLIB_DIR=${sources_path}/tinylib/ \
     -DCMAKE_INSTALL_PREFIX=${install_path} \
+    -G "${cmake_generator}" \
     ../
 
-cmake --build . --target install --config Release
+cmake --build . --target install --config ${cmake_build_config}
+
+rc=$?; 
+if [ $rc != 0 ]; then
+    exit
+fi
 
 cd ${install_path}/bin
 

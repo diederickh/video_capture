@@ -65,6 +65,7 @@ namespace ca {
     IMFMediaSource* imf_media_source;                                                   /* The IMFMediaSource represents the capture device. */
     IMFSourceReader* imf_source_reader;                                                 /* The IMFSourceReader is an intermediate that must be used to process raw video frames */
     int state;                                                                          /* Used to keep track of open/capture state */
+    bool must_shutdown_com;                                                             /* See the note about initializing COM more then once in the constructor. */
   };
   
   /* Safely release the given obj. */

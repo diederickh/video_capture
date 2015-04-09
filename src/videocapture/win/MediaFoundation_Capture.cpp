@@ -9,25 +9,41 @@ namespace ca {
     ,mf_callback(NULL)
     ,imf_media_source(NULL)
     ,imf_source_reader(NULL)
+    ,must_shutdown_com(true)
   {
-    // Initialize COM
+    /* Initialize COM */
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     if(FAILED(hr)) {
-      printf("Error: cannot intialize COM.\n");
-      ::exit(EXIT_FAILURE);
+      
+      /* 
+         CoInitializeEx must be called at least once and is usually called
+         only once freach each thread that uses the COM library. Multiple calls
+         to CoInitializeEx by the same thread are allowed as long as they pass
+         the same concurrency flag, but subsequent calls returns S_FALSE.
+
+         To close the COM library gracefully on a thread, each successful call to
+         CoInitializeEx, including any call that returns S_FALSE, must be balanced
+         by a corresponding call to CoUninitialize.         
+        
+         Source: https://searchcode.com/codesearch/view/76074495/ 
+      */
+      
+      must_shutdown_com = false;
+      
+      printf("Warning: cannot initialize COM in MediaFoundation_Capture.\n");
     }
 
-    // Initialize MediaFoundation
+    /* Initialize MediaFoundation */
     hr = MFStartup(MF_VERSION);
     if(FAILED(hr)) {
-      printf("Error: cannot startup the Media Foundation.\n");
+      printf("Error: cannot startup the MediaFoundation_Capture.\n");
       ::exit(EXIT_FAILURE);
     }
   }
 
   MediaFoundation_Capture::~MediaFoundation_Capture() {
 
-    // Close and stop
+    /* Close and stop */
     if(state & CA_STATE_CAPTUREING) {
       stop();
     }
@@ -36,14 +52,16 @@ namespace ca {
       close();
     }
 
-    // Shutdown MediaFoundation
+    /* Shutdown MediaFoundation */
     HRESULT hr = MFShutdown();
     if(FAILED(hr)) {
       printf("Error: failed to shutdown the MediaFoundation.\n");
     }
     
-    // Shutdown COM
-    CoUninitialize();
+    /* Shutdown COM */
+    if (true == must_shutdown_com) {
+      CoUninitialize();
+    }
 
     pixel_buffer.user = NULL;
   }
@@ -60,13 +78,13 @@ namespace ca {
       return -2;
     }
 
-    // Create the MediaSource 
+    /* Create the MediaSource  */
     if(createVideoDeviceSource(settings.device, &imf_media_source) < 0) {
       printf("Error: cannot create the media device source.\n");
       return -3;
     }
 
-    // Set the media format, width, height 
+    /* Set the media format, width, height  */
     std::vector<Capability> capabilities;
     if(getCapabilities(imf_media_source, capabilities) < 0) {
       printf("Error: cannot create the capabilities list to open the device.\n");
@@ -93,7 +111,7 @@ namespace ca {
       return -7;
     }
     
-    // Create the source reader.
+    /* Create the source reader. */
     MediaFoundation_Callback::createInstance(this, &mf_callback);
     if(createSourceReader(imf_media_source, mf_callback, &imf_source_reader) < 0) {
       printf("Error: cannot create the source reader.\n");
@@ -102,7 +120,7 @@ namespace ca {
       return -8;
     }
     
-    // Set the source reader format.
+    /* Set the source reader format. */
     if(setReaderFormat(imf_source_reader, cap) < 0) {
       printf("Error: cannot set the reader format.\n");
       safeReleaseMediaFoundation(&mf_callback);
@@ -162,7 +180,7 @@ namespace ca {
       return -3;
     }
 
-    // Kick off the capture stream.
+    /* Kick off the capture stream. */
     HRESULT hr = imf_source_reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, NULL, NULL, NULL);
     if(FAILED(hr)) {
       if(hr == MF_E_INVALIDREQUEST) {
@@ -226,13 +244,13 @@ namespace ca {
       goto done;
     }
 
-    // Filter capture devices.
+    /* Filter capture devices. */
     hr = config->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,  MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
     if(FAILED(hr)) {
       goto done;
     }
     
-    // Enumerate devices
+    /* Enumerate devices */
     hr = MFEnumDeviceSources(config, &devices, &count);
     if(FAILED(hr)) {
       goto done;
@@ -376,7 +394,7 @@ namespace ca {
       goto done;
     }
 
-    // Create a source reader which sets up the pipeline for us so we get access to the pixels
+    /* Create a source reader which sets up the pipeline for us so we get access to the pixels */
     hr = MFCreateSourceReaderFromMediaSource(mediaSource, attrs, sourceReader);
     if(FAILED(hr)) {
       printf("Error: while creating a source reader.\n");
@@ -403,7 +421,7 @@ namespace ca {
     
       if(SUCCEEDED(hr)) {
 
-        // PIXELFORMAT
+        /* PIXELFORMAT */
         PROPVARIANT var;
         PropVariantInit(&var);
         {
@@ -414,7 +432,7 @@ namespace ca {
         }
         PropVariantClear(&var);
 
-        // SIZE
+        /* SIZE */
         PropVariantInit(&var);
         {
           hr = type->GetItem(MF_MT_FRAME_SIZE, &var);
@@ -428,7 +446,7 @@ namespace ca {
         }
         PropVariantClear(&var);
       
-        // When the output media type of the source reader matches our specs, set it!
+        /* When the output media type of the source reader matches our specs, set it! */
         if(match_cap.width == cap.width
            && match_cap.height == cap.height
            && match_cap.pixel_format == cap.pixel_format) 
@@ -635,7 +653,7 @@ namespace ca {
       goto done;
     }
 
-    // Filter on capture devices
+    /* Filter on capture devices */
     hr = config->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
     if(FAILED(hr)) {
       printf("Error: cannot set the GUID on the IMFAttributes*.\n");
@@ -643,7 +661,7 @@ namespace ca {
       goto done;
     }
 
-    // Enumerate devices.
+    /* Enumerate devices. */
     hr = MFEnumDeviceSources(config, &devices, &count);
     if(FAILED(hr)) {
       printf("Error: cannot get EnumDeviceSources.\n");
@@ -655,10 +673,10 @@ namespace ca {
       goto done;
     }
 
-    // Make sure the given source is free/released.
+    /* Make sure the given source is free/released. */
     safeReleaseMediaFoundation(source);
 
-    // Activate the capture device.
+    /* Activate the capture device. */
     hr = devices[device]->ActivateObject(IID_PPV_ARGS(source));
     if(FAILED(hr)) {
       printf("Error: cannot activate the object.");
@@ -678,4 +696,4 @@ namespace ca {
 
     return result;
   }
-} // namespace ca
+} /* namespace ca */
