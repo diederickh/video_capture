@@ -73,6 +73,7 @@ namespace ca {
 
         hr = sample->GetBufferByIndex(i, &buffer);
 
+        
         if(SUCCEEDED(hr)) {
        
           DWORD length = 0;

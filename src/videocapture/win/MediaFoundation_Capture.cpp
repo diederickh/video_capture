@@ -229,7 +229,6 @@ namespace ca {
   }
 
   void MediaFoundation_Capture::update() {
-
   }
 
   std::vector<Device> MediaFoundation_Capture::getDevices() {
