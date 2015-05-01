@@ -2,7 +2,7 @@
 
 # Checkout the dependencies module
 if [ ! -d ${d}/dependencies ] ; then
-    git clone git@github.com:roxlu/dependencies.git
+    git clone https://github.com/roxlu/dependencies.git
 fi
 
 # Set environment variables
