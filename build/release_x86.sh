@@ -18,14 +18,13 @@ fi
 cd ${build_dir}
 
 cmake \
-    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_BUILD_TYPE=${cmake_build_type} \
     -DUSE_OPENGL=On \
     -DUSE_GENERATE_X86=On \
     -DUSE_GENERATE_IPHONE=Off \
     -DUSE_GENERATE_IPHONE_SIMULATOR=Off \
     -DUSE_GENERATE_RPI=Off \
     -DUSE_DECKLINK=Off \
-    -DCMAKE_BUILD_TYPE=${cmake_build_type} \
     -DEXTERN_LIB_DIR=${extern_path}/lib \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
