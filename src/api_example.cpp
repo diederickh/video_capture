@@ -55,7 +55,7 @@ int main() {
   height = 720;
 
   Settings cfg;
-  cfg.device = 1;
+  cfg.device = 0;
   cfg.capability = 0;
   cfg.format = CA_NONE;
 
@@ -64,7 +64,7 @@ int main() {
 
   printf("\nOutput formats:\n");
   cap.listOutputFormats();
-  //  cap.listCapabilities(cfg.device);
+  cap.listCapabilities(cfg.device);
 
   std::vector<Capability> caps;
   caps.push_back(Capability(width, height, CA_YUYV422));

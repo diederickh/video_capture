@@ -53,7 +53,7 @@ namespace ca {
     }
 
     // Get all devices (we select the one set in `settings`).
-    std::vector<V4L2_Device> v4l2_devices = getDevicesV4L2();
+    std::vector<V4L2_Device> v4l2_devices = v4l2_get_devices(); 
     if(settings.device >= v4l2_devices.size()) {
       printf("Error: device index is invalid.\n");
       return -3;
@@ -368,13 +368,21 @@ namespace ca {
   std::vector<Device> V4L2_Capture::getDevices() {
 
     std::vector<Device> result;
-    std::vector<V4L2_Device> devs = getDevicesV4L2();
+    std::vector<V4L2_Device> devs = v4l2_get_devices();
 
     for(size_t i = 0; i < devs.size(); ++i) {
+      
       V4L2_Device& v4l2_dev = devs[i];
       Device dev;
+
+      if (getDriverInfo(v4l2_dev.path.c_str(), v4l2_dev) < 0) {
+        printf("We didn't find any driver info for the device: %s.\n", v4l2_dev.path.c_str());
+        continue;
+      }
+      
       dev.index = i;
       dev.name = v4l2_dev.toString();
+      
       result.push_back(dev);
     }
 
@@ -525,74 +533,12 @@ namespace ca {
     return 1;
   }
 
-  std::vector<V4L2_Device> V4L2_Capture::getDevicesV4L2() {
-    std::vector<V4L2_Device> result;
-
-    struct udev* udev;
-    struct udev_enumerate* enumerate;
-    struct udev_list_entry* devices;
-    struct udev_list_entry* dev_list_entry;
-    struct udev_device* dev;
- 
-    udev = udev_new();
-    if(!udev) {
-      printf("Error: Cannot udev_new()\n");
-      return result;
-    }
- 
-    enumerate = udev_enumerate_new(udev);
-    udev_enumerate_add_match_subsystem(enumerate, "video4linux");
-    udev_enumerate_scan_devices(enumerate);
-    devices = udev_enumerate_get_list_entry(enumerate);
-
-    udev_list_entry_foreach(dev_list_entry, devices) {
-
-      // Get the device by syspath.
-      const char* syspath = udev_list_entry_get_name(dev_list_entry);
-      dev = udev_device_new_from_syspath(udev, syspath);
-
-      if(!dev) {
-        printf("Error: cannot get the device using the syspath: %s\n", syspath);
-        continue;
-      }
-
-      V4L2_Device v4l2_device;
-      v4l2_device.path = udev_device_get_devnode(dev);
-
-      if(v4l2_device.path.size() == 0) {
-        printf("Error: Cannot find devpath.\n");
-        continue;
-      }
-
-      // Append some drive info
-      if(getDriverInfo(v4l2_device.path.c_str(), v4l2_device) < 0) {
-        continue;
-      }
-
-      dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
-
-      if(!dev) {
-        printf("Error:Cannot find related usb device.\n");
-        continue;
-      }
-
-      v4l2_device.id_vendor = udev_device_get_sysattr_value(dev, "idVendor");
-      v4l2_device.id_product = udev_device_get_sysattr_value(dev, "idProduct");
-
-      result.push_back(v4l2_device);
-    }
-
-    udev_enumerate_unref(enumerate);
-    udev_unref(udev);
-    return result;
-  }
-
   int V4L2_Capture::getDeviceV4L2(int dx, V4L2_Device& result) {
 
-    std::vector<V4L2_Device> devices = getDevicesV4L2();
+    std::vector<V4L2_Device> devices = v4l2_get_devices();
 
     if(dx > (int)devices.size()-1) {
-      printf("Error: device not found.\n");
+      printf("Error: Device not found for index %d. Are you sure you're using a valid index?\n", dx);
       return -1;
     }
 

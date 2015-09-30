@@ -50,5 +50,7 @@ cd ${install_path}/bin
 #./decklink_example
 #./test_conversion
 #./test_capability_filter
+#./test_v4l2_devices
+#./test_linux_device_list
 
 

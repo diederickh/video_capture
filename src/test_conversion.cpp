@@ -14,7 +14,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
 #include <tinylib.h>
 #include <fstream>
 #include <videocapture/Capture.h>

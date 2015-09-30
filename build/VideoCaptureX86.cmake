@@ -92,11 +92,16 @@ if(UNIX AND NOT APPLE)
     ${sd}/videocapture/linux/V4L2_Utils.cpp
     )
 
+  # Use the Udev backend to query for capture devices; otherwise use V4L2 defaults.
   find_library(libudev udev)
- 
-  list(APPEND videocapture_libraries
-    ${libudev}
-    )
+  if (libudev)
+    list(APPEND videocapture_sources ${sd}/videocapture/linux/V4L2_Devices_Udev.cpp)
+    list(APPEND videocapture_libraries
+      ${libudev}
+      )
+  else()
+    list(APPEND videocapture_sources  ${sd}/videocapture/linux/V4L2_Devices_Default.cpp) 
+  endif()
 
   if (USE_DECKLINK)
     list(APPEND videocapture_sources
@@ -225,6 +230,20 @@ if (NOT USE_IOS)
   target_link_libraries(test_capability_filter ${videocapture_libraries} videocapture${debug_flag})
   install(TARGETS test_capability_filter RUNTIME DESTINATION bin)
       
+endif()
+
+if (UNIX AND NOT APPLE)
+  
+  # Experiment to retrieve device information using udev.
+  add_executable(test_v4l2_devices ${sd}/test_v4l2_devices.cpp)
+  target_link_libraries(test_v4l2_devices ${videocapture_libraries} videocapture${debug_flag})
+  install(TARGETS test_v4l2_devices RUNTIME DESTINATION bin)
+
+  # Test device list 
+  add_executable(test_linux_device_list ${sd}/test_linux_device_list.cpp)
+  target_link_libraries(test_linux_device_list ${videocapture_libraries} videocapture${debug_flag})
+  install(TARGETS test_linux_device_list RUNTIME DESTINATION bin)
+  
 endif()
 
 if (USE_DECKLINK)

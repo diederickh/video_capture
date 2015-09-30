@@ -52,7 +52,9 @@ namespace ca {
        << "driver: "     << driver      << ", " 
        << "card: "       << card        << ", "
        << "bufinfo: "    << bus_info    << ", "
-       << "version: "    << version_major << "." << version_minor << "." << version_micro;
+       << "version: "    << version_major << "." << version_minor << "." << version_micro << ", "
+       << "path: "       << path;
+    
 
     std::string result = ss.str();
     return result;
