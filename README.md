@@ -12,7 +12,7 @@ Compiling
 
  ````sh
  cd video_capture/build
- ./release.sh
+ ./release_x86.sh 64
  ````        
 
  **Windows**
@@ -21,7 +21,7 @@ Compiling
 
  ````sh
  cd video_capture/build
- ./release.sh
+ ./release_x86.sh 64
  ````    
 
 Decklink

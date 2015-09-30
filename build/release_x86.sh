@@ -1,5 +1,7 @@
 #!/bin/sh
 
+mydir=${PWD}
+
 # Checkout the dependencies module
 if [ ! -d ${d}/dependencies ] ; then
     git clone https://github.com/roxlu/dependencies.git
@@ -10,11 +12,12 @@ vs="2013"
 source ./dependencies/build.sh
 
 # Create build dir.
-if [ ! -d ${build_dir} ] ; then
-    mkdir ${build_dir}
+if [ ! -d ${mydir}/${build_dir} ] ; then
+    mkdir ${mydir}/${build_dir}
 fi
 
 # And compile
+cd ${mydir}
 cd ${build_dir}
 
 cmake \
