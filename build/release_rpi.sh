@@ -1,8 +1,10 @@
 #!/bin/sh
 
 set -x
-
-. ./set_variables.sh
+d=${PWD}
+triplet="arm-linux-gnueabihf"
+extern_path=${d}/../extern/${triplet}
+install_path=${d}/../install/${triplet}
 
 if [ ! -d build.release.rpi ] ; then
     mkdir build.release.rpi
@@ -10,18 +12,10 @@ fi
 
 cd build.release.rpi
 
-triplet="arm-linux-gnueabihf"
-extern_path=${d}/../extern/${triplet}
-install_path=${d}/../install/${triplet}
-target=arm-linux-gnueabihf
-
-export PATH=${HOME}/x-tools/${target}/bin:${PATH}
-
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=${install_path} \
-    -DCMAKE_C_COMPILER=${target}-gcc \
-    -DCMAKE_CXX_COMPILER=${target}-g++ \
+    -DCMAKE_TOOLCHAIN_FILE=${d}/ToolchainArm.cmake \
     -DUSE_OPENGL=Off \
     -DUSE_GENERATE_X86=Off \
     -DUSE_GENERATE_IPHONE=Off \
@@ -38,6 +32,5 @@ cmake --build . --target install --config Release
 
 cd ${install_path}/bin
 
-#./api_example
 
 
