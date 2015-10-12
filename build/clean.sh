@@ -12,3 +12,7 @@ if [ -d build.debug ] ; then
     rm -r build.debug
 fi
 
+if [ -d build.release.rpi ] ; then
+    rm -r build.release.rpi
+fi
+    

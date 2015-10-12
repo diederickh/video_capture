@@ -71,8 +71,12 @@ namespace ca {
       case V4L2_PIX_FMT_NV21: return "V4L2_PIX_FMT_NV21"; break;
       case V4L2_PIX_FMT_NV16: return "V4L2_PIX_FMT_NV16"; break;
       case V4L2_PIX_FMT_NV61: return "V4L2_PIX_FMT_NV61"; break;
+#if defined(V4L2_PIX_FMT_NV24)
       case V4L2_PIX_FMT_NV24: return "V4L2_PIX_FMT_NV24"; break;
+#endif
+#if defined(V4L2_PIX_FMT_NV42)        
       case V4L2_PIX_FMT_NV42: return "V4L2_PIX_FMT_NV42"; break;
+#endif        
       case V4L2_PIX_FMT_NV12M: return "V4L2_PIX_FMT_NV12M"; break;
 #if defined(V4L2_PIX_FMT_NV21M)
       case V4L2_PIX_FMT_NV21M: return "V4L2_PIX_FMT_NV21M"; break;
@@ -101,10 +105,18 @@ namespace ca {
       case V4L2_PIX_FMT_SGBRG12: return "V4L2_PIX_FMT_SGBRG12"; break;
       case V4L2_PIX_FMT_SGRBG12: return "V4L2_PIX_FMT_SGRBG12"; break;
       case V4L2_PIX_FMT_SRGGB12: return "V4L2_PIX_FMT_SRGGB12"; break;
+#if defined(V4L2_PIX_FMT_SBGGR10DPCM8)        
       case V4L2_PIX_FMT_SBGGR10DPCM8: return "V4L2_PIX_FMT_SBGGR10DPCM8"; break;
+#endif
+#if defined(V4L2_PIX_FMT_SGBRG10DPCM8)        
       case V4L2_PIX_FMT_SGBRG10DPCM8: return "V4L2_PIX_FMT_SGBRG10DPCM8"; break;
+#endif
+#if defined(V4L2_PIX_FMT_SGRBG10DPCM8)        
       case V4L2_PIX_FMT_SGRBG10DPCM8: return "V4L2_PIX_FMT_SGRBG10DPCM8"; break;
+#endif
+#if defined(V4L2_PIX_FMT_SRGGB10DPCM8)        
       case V4L2_PIX_FMT_SRGGB10DPCM8: return "V4L2_PIX_FMT_SRGGB10DPCM8"; break;
+#endif        
       case V4L2_PIX_FMT_SBGGR16: return "V4L2_PIX_FMT_SBGGR16"; break;
       case V4L2_PIX_FMT_MJPEG: return "V4L2_PIX_FMT_MJPEG"; break;
       case V4L2_PIX_FMT_JPEG: return "V4L2_PIX_FMT_JPEG"; break;
@@ -138,7 +150,9 @@ namespace ca {
       case V4L2_PIX_FMT_SPCA561: return "V4L2_PIX_FMT_SPCA561"; break;
       case V4L2_PIX_FMT_PAC207: return "V4L2_PIX_FMT_PAC207"; break;
       case V4L2_PIX_FMT_MR97310A: return "V4L2_PIX_FMT_MR97310A"; break;
+#if defined(V4L2_PIX_FMT_JL2005BCD)        
       case V4L2_PIX_FMT_JL2005BCD: return "V4L2_PIX_FMT_JL2005BCD"; break;
+#endif        
       case V4L2_PIX_FMT_SN9C2028: return "V4L2_PIX_FMT_SN9C2028"; break;
       case V4L2_PIX_FMT_SQ905C: return "V4L2_PIX_FMT_SQ905C"; break;
       case V4L2_PIX_FMT_PJPG: return "V4L2_PIX_FMT_PJPG"; break;

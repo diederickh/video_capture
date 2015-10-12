@@ -4,12 +4,16 @@ set -x
 
 . ./set_variables.sh
 
-cd build.release
+if [ ! -d build.release.rpi ] ; then
+    mkdir build.release.rpi
+fi
 
-triplet="armv6-rpi-linux-gnueabi"
+cd build.release.rpi
+
+triplet="arm-linux-gnueabihf"
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
-target=armv6-rpi-linux-gnueabi
+target=arm-linux-gnueabihf
 
 export PATH=${HOME}/x-tools/${target}/bin:${PATH}
 

@@ -13,17 +13,17 @@ set(videocapture_sources
   ${sd}/videocapture/Capture.cpp
   ${sd}/videocapture/Types.cpp
   ${sd}/videocapture/Utils.cpp
+  ${sd}/videocapture/CapabilityFinder.cpp
   ${sd}/videocapture/linux/V4L2_Capture.cpp
   ${sd}/videocapture/linux/V4L2_Types.cpp
   ${sd}/videocapture/linux/V4L2_Utils.cpp
+  ${sd}/videocapture/linux/V4L2_Devices_Default.cpp 
 )
 
 list(APPEND videocapture_libraries
-  udev
   dl
   rt
   dl
-  udev  
   pthread
   )
 
