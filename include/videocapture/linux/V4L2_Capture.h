@@ -20,7 +20,6 @@ extern "C" {
 #  include <sys/ioctl.h>
 #  include <asm/types.h>
 #  include <linux/videodev2.h>
-#  include <libudev.h>
 #  include <locale.h>
 #  include <unistd.h>
 }

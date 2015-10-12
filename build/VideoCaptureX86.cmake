@@ -94,7 +94,7 @@ if(UNIX AND NOT APPLE)
 
   # Use the Udev backend to query for capture devices; otherwise use V4L2 defaults.
   find_library(libudev udev)
-  if (libudev)
+  if (${libudev})
     list(APPEND videocapture_sources ${sd}/videocapture/linux/V4L2_Devices_Udev.cpp)
     list(APPEND videocapture_libraries
       ${libudev}
@@ -124,7 +124,6 @@ if(UNIX AND NOT APPLE)
       Xi
       Xcursor
       Xinerama
-      udev  
       pthread
       )
     
