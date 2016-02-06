@@ -586,7 +586,7 @@ namespace ca {
 
           if(guid == MF_MT_SUBTYPE && var.vt == VT_CLSID) {
             cap.pixel_format = media_foundation_video_format_to_capture_format(*var.puuid);
-            cap.pixel_format_index = j;
+            cap.pixel_format_index = i;
           }
           else if(guid == MF_MT_FRAME_SIZE) {
             UINT32 high = 0;
@@ -604,7 +604,7 @@ namespace ca {
               UINT32 low =  0;
               Unpack2UINT32AsUINT64(var.uhVal.QuadPart, &high, &low);
               cap.fps = fps_from_rational(low, high);
-              cap.fps_index = j;
+              cap.fps_index = i;
             }
 
           PropVariantClear(&var);
