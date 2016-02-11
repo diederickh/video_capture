@@ -30,9 +30,9 @@ namespace ca {
   // Return number of available capture devices
   int Base::getNumberOfDevices() {
 
-	  std::vector<Device> devices = getDevices();
+    std::vector<Device> devices = getDevices();
 
-	  return (int)devices.size();
+    return (int)devices.size();
   }
 
   // List the capabilities for the given device.
