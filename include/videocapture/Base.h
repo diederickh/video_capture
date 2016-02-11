@@ -35,6 +35,7 @@ namespace ca {
     //    virtual int getOutputFormat() = 0;                                            /* This function should return the capture format that is used and by the capture SDK. This should be the final output format that is used. e.g. on Mac you can automotically convert from JPEG to a YUV* format, this function should return the YUV format. */  
     
     int listDevices();                                                           /* List the available capture devices for the implementation and return the number of found devices. */
+	int getNumberOfDevices();                                                    /* Return the number of available capture devices without printing them as listDevices does */
     int listCapabilities(int device);                                            /* List the available capabilities for the given device. */
     int listOutputFormats();                                                     /* List the available output formats the at SDK of the OS/.. supports. On mac these are the output formats of the AVCaptureVideoDataOutput */
     int findCapability(int device, int width, int height, int fmt);              /* Get the best matching capability for the given format and dimensions. We return the capability index or -1 if not found. */
