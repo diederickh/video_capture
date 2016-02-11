@@ -5,6 +5,7 @@
 #include <string>
 #include <stdint.h>
 #include <stdio.h>
+#include <videocapture/Utils.h>
 
 /* General */
 #define CA_NONE -1
@@ -38,9 +39,10 @@
 #define CA_BGRA32 9                                                                 /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
 #define CA_RGBA32 10                                                                /* RGBA 8:8:8:8 32bpp. */
 #define CA_RGB24 11                                                                 /* RGB 8:8:8 24bit */
-#define CA_JPEG_OPENDML 12                                                          /* JPEG with Open-DML extensions */
-#define CA_H264 13                                                                  /* H264 */
-#define CA_MJPEG 14                                                                 /* MJPEG 2*/
+#define CA_BGR24 12                                                                 /* BGR 8:8:8 24bit */
+#define CA_JPEG_OPENDML 13                                                          /* JPEG with Open-DML extensions */
+#define CA_H264 14                                                                  /* H264 */
+#define CA_MJPEG 15                                                                 /* MJPEG 2*/
 
 /* Frame rates (IMPORANTANT: higher framerates MUST have a higher integer value for capability filtering)*/
 #define CA_FPS_60_00   6000
@@ -86,6 +88,7 @@ namespace ca {
   public:
     PixelBuffer();
     int setup(int w, int h, int fmt);                                              /* Set the strides, widths, heights, nbyte values for the given pixel format (CA_UYVY422, CA_YUV420P etc..) and video frame size.. Returns 0 on success otherwise < 0. */
+    int get_rgb_pixels(uint8_t* rgb_pixels);                                       /* Return data as RGB pixels; argument pixels must be pre-allocated to size width*height*3   */
 
   public:
     uint8_t* pixels;                                                                /* When data is one continuous block of member you can use this, otherwise it points to the same location as plane[0]. */
