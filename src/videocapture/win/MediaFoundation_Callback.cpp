@@ -83,8 +83,12 @@ namespace ca {
           
           cap->pixel_buffer.nbytes = (size_t)length;
           cap->pixel_buffer.plane[0] = data;
-          cap->pixel_buffer.plane[1] = data + cap->pixel_buffer.offset[1];
-          cap->pixel_buffer.plane[2] = data + cap->pixel_buffer.offset[2];
+          if (cap->pixel_buffer.offset[1] > 0) {
+            cap->pixel_buffer.plane[1] = data + cap->pixel_buffer.offset[1];
+          }
+          if (cap->pixel_buffer.offset[2] > 0) {
+            cap->pixel_buffer.plane[2] = data + cap->pixel_buffer.offset[2];
+          }
           cap->cb_frame(cap->pixel_buffer);
 
           buffer->Unlock();

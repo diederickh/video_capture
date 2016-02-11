@@ -47,6 +47,7 @@ namespace ca {
       case CA_ARGB32:           return "CA_ARGB32";
       case CA_BGRA32:           return "CA_BGRA32";
       case CA_RGB24:            return "CA_RGB24";
+      case CA_BGR24:            return "CA_BGR24";
       case CA_JPEG_OPENDML:     return "CA_JPEG_OPENDML";
       case CA_H264:             return "CA_H264";
       case CA_MJPEG:            return "CA_MJPEG";
@@ -54,5 +55,20 @@ namespace ca {
       default:                  return "UNKNOWN_FORMAT";
     }
   }
+  
+  void yuv_to_rgb(uint8_t& y, uint8_t& u, uint8_t& v, double& r, double& g, double& b)
+  {
+    r = (298 * (y - 16) + 409 * (v - 128) + 128) >> 8;
+    g = (298 * (y - 16) - 100 * (u - 128) - 208 * (v - 128) + 128) >> 8;
+    b = (298 * (y - 16) + 516 * (u - 128) + 128) >> 8;
+
+    if (r < 0) r = 0;
+    else if (r > 255) r = 255;
+    if (g < 0) g = 0;
+    else if (g > 255) g = 255;
+    if (b < 0) b = 0;
+    else if (b > 255) b = 255;
+  }
+  
 
 } // namespace ca

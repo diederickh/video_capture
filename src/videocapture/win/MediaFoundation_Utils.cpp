@@ -5,8 +5,10 @@ namespace ca {
   // Convert the MF format to one we can use.
   int media_foundation_video_format_to_capture_format(GUID guid) {
 
-    if(IsEqualGUID(guid, MFVideoFormat_RGB24))     { return CA_RGB24;   }
+    if(IsEqualGUID(guid, MFVideoFormat_RGB24))     { return CA_BGR24;   } // MFVideoFormat_RGB24: Has BGR layout!
     else if(IsEqualGUID(guid, MFVideoFormat_I420)) { return CA_YUV420P; } 
+    else if (IsEqualGUID(guid, MFVideoFormat_NV12)) { return CA_YUV420BP; }
+    else if (IsEqualGUID(guid, MFVideoFormat_YUY2)) { return CA_YUYV422; }
     else if(IsEqualGUID(guid, MFVideoFormat_MJPG)) { return CA_MJPEG; } 
     else {
       return CA_NONE;
