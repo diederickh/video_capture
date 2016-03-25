@@ -444,11 +444,25 @@ namespace ca {
           }
         }
         PropVariantClear(&var);
+
+        /* FRAME RATE */
+        PropVariantInit(&var);
+        {
+          hr = type->GetItem(MF_MT_FRAME_RATE, &var);
+          if (SUCCEEDED(hr)) {
+            UINT32 high = 0;
+            UINT32 low = 0;
+            Unpack2UINT32AsUINT64(var.uhVal.QuadPart, &high, &low);
+            match_cap.fps = fps_from_rational(low, high);
+          }
+        }
+        PropVariantClear(&var);
       
         /* When the output media type of the source reader matches our specs, set it! */
         if(match_cap.width == cap.width
            && match_cap.height == cap.height
-           && match_cap.pixel_format == cap.pixel_format) 
+           && match_cap.pixel_format == cap.pixel_format
+           && match_cap.fps == cap.fps)
           {
             hr = imf_source_reader->SetCurrentMediaType(0, NULL, type);
             if(FAILED(hr)) {
@@ -595,11 +609,9 @@ namespace ca {
             cap.width = (int)high;
             cap.height = (int)low;
           }
-          else if(guid == MF_MT_FRAME_RATE_RANGE_MIN 
-                  || guid == MF_MT_FRAME_RATE_RANGE_MAX 
-                  || guid == MF_MT_FRAME_RATE)
-            {
-              // @todo - not all FPS are added to the capability list. 
+          else if(guid == MF_MT_FRAME_RATE) {
+              // @todo - use MF_MT_FRAME_RATE_RANGE_MIN and MF_MT_FRAME_RATE_RANGE_MAX to extract more FPS variants supported by the device - important: modify also setReaderFormat() 
+			  // @todo - not all FPS are added to the capability list. 
               UINT32 high = 0;
               UINT32 low =  0;
               Unpack2UINT32AsUINT64(var.uhVal.QuadPart, &high, &low);
