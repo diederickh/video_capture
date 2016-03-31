@@ -52,6 +52,12 @@ namespace ca {
 
   int Capture::open(Settings settings) {
     assert(cap != NULL);
+
+    if (settings.device < 0 || settings.device >= cap->getNumberOfDevices()) {
+      printf("Error: Cannot access device number %d (zero based) because system has only %d devices connected.\n", settings.device, cap->getNumberOfDevices());
+      return -1;
+    }
+
     return cap->open(settings);
   }
 
@@ -77,6 +83,13 @@ namespace ca {
 
   std::vector<Capability> Capture::getCapabilities(int device) {
     assert(cap != NULL);
+
+    if (device < 0 || device >= cap->getNumberOfDevices()) {
+      printf("Error: Cannot access device number %d (zero based) because system has only %d devices connected.\n", device, cap->getNumberOfDevices());
+      std::vector<Capability> result;
+      return result;
+    }
+
     return cap->getCapabilities(device);
   }
 

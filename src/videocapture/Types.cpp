@@ -39,6 +39,7 @@ namespace ca {
 
     switch (fmt) {
 
+      /* Planar Formats */
       case CA_YUV420P: {
         stride[0] = w;
         stride[1] = w / 2;
@@ -58,15 +59,37 @@ namespace ca {
 
         break;
       }
-        /*
-      case CA_YUYV422: 
-      case CA_UYVY422: {
+
+      /* Bi Planar Formats: Plane 1: Y ; Plane 2: Packed U/V */
+      case CA_YUV420BP: { // see: http://i.stack.imgur.com/Kyknv.png
         stride[0] = w;
-        stride[1] = w / 2;
-        stride[2] = w / 2;
+        stride[1] = w;
+
+        width[0] = w;
+        width[1] = w / 2;
+
+        height[0] = h;
+        height[1] = h / 2;
+
+        offset[0] = 0;
+        offset[1] = (size_t)(w * h);
+
         break;
       }
-        */
+
+      /* Packed Formats */
+      case CA_YUYV422: 
+      case CA_UYVY422: {
+        stride[0] = w * 2;
+
+        break;
+      }
+
+      case CA_RGB24: {
+        stride[0] = w * 3;
+
+        break;
+      }
 
       default: {
         printf("error: cannot setup the PixelBuffer for the given fmt: %d\n", fmt);

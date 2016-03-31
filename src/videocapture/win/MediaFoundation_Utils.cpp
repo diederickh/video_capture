@@ -7,6 +7,8 @@ namespace ca {
 
     if(IsEqualGUID(guid, MFVideoFormat_RGB24))     { return CA_RGB24;   }
     else if(IsEqualGUID(guid, MFVideoFormat_I420)) { return CA_YUV420P; } 
+    else if (IsEqualGUID(guid, MFVideoFormat_NV12)) { return CA_YUV420BP; }
+    else if (IsEqualGUID(guid, MFVideoFormat_YUY2)) { return CA_YUYV422; }
     else if(IsEqualGUID(guid, MFVideoFormat_MJPG)) { return CA_MJPEG; } 
     else {
       return CA_NONE;

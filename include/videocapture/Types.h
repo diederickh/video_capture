@@ -31,9 +31,9 @@
 #define CA_YUYV422 2                                                                /* Y0 Cb Y1 Cr */
 #define CA_YUV422P 3                                                                /* YUV422 Planar */
 #define CA_YUV420P 4                                                                /* YUV420 Planar */
-#define CA_YUV420BP 5                                                               /* YUV420 Bi Planar */
+#define CA_YUV420BP 5                                                               /* YUV420 Bi Planar (NV12) */
 #define CA_YUVJ420P 6                                                               /* YUV420 Planar Full Range (JPEG), J comes from the JPEG. (values 0-255 used) */
-#define CA_YUVJ420BP 7                                                              /* YUV420 Bi-Planer Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
+#define CA_YUVJ420BP 7                                                              /* YUV420 Bi-Planer (NV12) Full Range (JPEG), J comes fro the JPEG. (values: luma = [16,235], chroma=[16,240]) */
 #define CA_ARGB32 8                                                                 /* ARGB 8:8:8:8 32bpp, ARGBARGBARGB... */
 #define CA_BGRA32 9                                                                 /* BGRA 8:8:8:8 32bpp, BGRABGRABGRA... */
 #define CA_RGBA32 10                                                                /* RGBA 8:8:8:8 32bpp. */

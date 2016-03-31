@@ -27,8 +27,21 @@ namespace ca {
     return (int)devices.size();
   }
 
+  // Return number of available capture devices
+  int Base::getNumberOfDevices() {
+
+    std::vector<Device> devices = getDevices();
+
+    return (int)devices.size();
+  }
+
   // List the capabilities for the given device.
   int Base::listCapabilities(int device) {
+
+    if (device < 0 || device >= getNumberOfDevices()) {
+        printf("Error: Cannot access device number %d (zero based) because system has only %d devices connected.\n", device, getNumberOfDevices());
+        return -1;
+    }
 
     std::vector<Capability> caps = getCapabilities(device);
     if(caps.size() == 0) {
@@ -72,6 +85,11 @@ namespace ca {
   
   // Find a capability
   int Base::findCapability(int device, int width, int height, int fmt) {
+
+    if (device < 0 || device >= getNumberOfDevices()) {
+        printf("Error: Cannot access device number %d (zero based) because system has only %d devices connected.\n", device, getNumberOfDevices());
+        return -1;
+    }
 
     int fps = -1;
     int result = -1;
